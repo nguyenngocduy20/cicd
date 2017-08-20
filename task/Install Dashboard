@@ -1,0 +1,122 @@
+
+NOTE: Toàn bộ quá trình cài đặt chỉ cần làm trên 1 master (master1 hoặc master2)
+
+====== CHUẨN BỊ FILE CONFIGURE YAML: "kubernetes-dashboard.yaml"
+[Ở đây làm trên master1]
+Đang ở thư mục ~/kube-workplace
+
+* 1. Tạo thư mục trong ~/kube-workplace/kubernetes/dashboard, thư mục này đồng bộ
+với phần cài đặt "Custom Kubernetes Cluster step-by-step"
+
+      # mkdir -p ~/kube-workplace/kubernetes/dashboard
+      # cd ~/kube-workplace/kubernetes/dashboard
+
+* 2. Download file cấu hình kubernetes-dashboard.yaml
+
+      # curl -L https://rawgit.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard.yaml
+
+* 3. Sao chép file kubeconfig vào thư mục /etc/kubernetes/ hoặc thư mục làm việc của
+kubernetes và không thay đổi file này nếu không biết nó có ảnh hưởng gì.
+(kubeconfig có path=~/.kube/config (tên có thể thay đổi) hoặc nội dung giống trong
+mô tả phần cài đặt "Custom Kubernetes Cluster step-by-step" như sau:)
+------ Bắt đầu file từ dòng bên dưới ------------------
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: http://10.86.126.41:8081
+  name: kube-cluster1
+contexts:
+- context:
+    cluster: kube-cluster1
+    namespace: default
+    user: ""
+  name: default/kube-cluster1/duynn@kubernetes
+current-context: default/kube-cluster1/duynn@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: duynn@kubernetes
+  user:
+    token: O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+- name: haond@kubernetes
+  user:
+    token: NnCMwetrw5Pi6Xc1662rDTmSXYrMg8ir
+------ Kết thúc file từ ký tự cuối dòng bên trên ------
+
+      # cp ~/kube-workplace/kubernetes/kubeconfig /etc/kubernetes/kubeconfig_token
+      or
+      # touch /etc/kubernetes/kubeconfig_token
+      # vim /etc/kubernetes/kubeconfig_token
+
+Nếu cluster sử dụng password/user để chứng thực thì ta có thể đổi phần schema "users:"
+bên trong file kubeconfig thành:
+users:
+- name: duynn@kubernetes
+  user:
+    username: duynn@kubernetes
+    password: duynn@kubernetes
+- name: haond@kubernetes
+  user:
+    username: haond@kubernetes
+    password: haond@kubernetes
+[Phần này chưa thử toàn diện do sử dụng token từ step-by-step]
+
+* 4. Bổ sung cấu hình trỏ kubeconfig vào kubernetes_dashboard.yaml
+
+      # sudo vim ~/kube-workplace/kubernetes/dashboard/kubernetes-dashboard.yaml
+
+4.1 Sửa replicas cho phù hợp: nên chọn cùng với số lượng slave: replicas: 3
+4.2 Sửa phiên bản kubernetes-dashboard cho phù hợp: nên giữ nguyên phiên bản mới nhất
+hoặc thử rollback những phiên bản cũ hơn đã ổn định (test hiện tại: amd64:v1.6.0)
+4.3 Bổ sung cấu hình sau vào ngang hàng với schema "ports:" để trỏ đến file
+kubeconfig_token. Bổ sung url dẫn đến API server (có thể dùng "kubectl config view"
+hoặc "kubectl cluster-info" để xem.)
+
+ports:
+        - containerPort: 9090
+          protocol: TCP
+------ Bắt đầu phần thêm vào không tính dòng này -----
+env:
+        - name: KUBECONFIG
+          value: /etc/kubernetes/kubeconfig_token
+------ Kết thúc phần thêm vào không tính dòng này -----
+args:
+------ Bắt đầu phần thêm vào không tính dòng này -----
+        - --apiserver-host=http://10.86.126.41:8081
+------ Kết thúc phần thêm vào không tính dòng này -----
+
+4.5 Save file
+      Chọn ESC -> :x -> Enter
+
+Lưu ý yaml file không sử dụng tab -> thay tất cả bằng khoảng trắng "space"
+
+* 5. Deployment kubernetes-dashboard theo như cấu hình trên
+      # kubectl create -f kubernetes-dashboard.yaml
+
+* 6. Kiểm tra
+
+6.1 Kiểm tra pods, phải có 3 pods được tạo ra cho 3 replicas với 3 slave (minion1, 2, 3)
+      # kubectl get pods --all-namespaces
+Nếu đều running không bị crashloopbackoff hay pending thì oke
+6.2 Kiểm tra services, có thể xem được NodePort để làm URL trên browser
+      # kubectl get services --all-namespaces
+      or
+      # kubectl describe -n kube-system services kubernetes-dashboard
+Nếu services này không tồn tại thì kiểm tra tiếp deployment
+6.3 Kiểm tra deployment
+      # kubectl get deployment --all-namespaces
+Nếu có deployment mà không tìm thấy services thì thử expose NodePort
+      # kubectl expose deployment kubernetes-dashboard --port=80 --type="NodePort"
+
+* 7. Vào Dash UI trên browser của máy cùng chung đường mạng với cluster
+Lưu ý cần biết NodePort xem từ services và IP của slave (minion1, 2 hoặc 3)
+      http://10.86.126.53:[NodePort]
+      or
+      http://10.86.126.56:[NodePort]
+      or
+      http://10.86.126.57:[NodePort]
+
+Hiện tại tính đến ngày 4/12/2017 (month, day, year)
+thì NodePort: 31714
+      http://10.86.126.53:31714

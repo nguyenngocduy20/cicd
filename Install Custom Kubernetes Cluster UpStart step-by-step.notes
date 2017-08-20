@@ -1,0 +1,157 @@
+Prepare:
+		// Get kubernetes .tar.gz
+		$ mkdir ~/kube-workplace
+		$ cd kube-workplace
+		$ wget -L https://dl.k8s.io/v1.5.4/kubernetes.tar.gz
+		$ tar -xzf kubernetes.tar.gz
+
+		// Get binary
+		$ cd ./kubernetes/cluster
+		$ ./get-kube-binaries.sh
+
+		// Extract ./kubernetes/server/kubernetes-server-linux-amd64.tar.gz
+		$ cd ~/kube-workplace/kubernetes/server
+		$ tar -zxf kubernetes-server-linux-amd64.tar.gz
+
+
+		Trang release etcd: https://github.com/coreos/etcd/releases
+		$ curl -L  https://github.com/coreos/etcd/releases/download/v2.3.7/etcd-v2.3.7-linux-amd64.tar.gz -o etcd-v2.3.7-linux-amd64.tar.gz
+		$ tar xzvf etcd-v2.3.7-linux-amd64.tar.gz
+		$ cd etcd-v2.3.7-linux-amd64
+		$ ./etcdctl member list
+
+====== CHẠY UPSTART
+	======== Master
+		$ cd ~/kube-workplace/kubernetes/server/bin
+		$ sudo mkdir /opt/bin
+
+		$ sudo cp kube-apiserver /opt/bin
+		$ sudo cp kube-scheduler /opt/bin
+		$ sudo cp kube-controller-manager /opt/bin
+		$ sudo cp etcd-v2.3.7-linux-amd64/etcd /opt/bin
+
+		$ cd ~/kube-workplace/kubernetes/cluster/ubuntu/master
+
+		$ sudo cp init_conf/* /etc/init/
+		$ sudo cp init_scripts/* /etc/init.d/
+
+		$ sudo nano /etc/default/etcd
+
+		Chỉnh sửa nội dung:
+			Trên master1:
+				ETCD_OPTS="-name etcd0 \
+				-advertise-client-urls http://10.86.126.41:2379,http://10.86.126.41:4001 \
+				-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+				-initial-advertise-peer-urls http://10.86.126.41:2380 \
+				-listen-peer-urls http://0.0.0.0:2380 \
+				-initial-cluster-token etcd-cluster-1 \
+				-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+				-initial-cluster-state new"
+
+			Trên master2:
+				ETCD_OPTS="-name etcd1 \
+				-advertise-client-urls http://10.86.126.42:2379,http://10.86.126.42:4001 \
+				-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+				-initial-advertise-peer-urls http://10.86.126.42:2380 \
+				-listen-peer-urls http://0.0.0.0:2380 \
+				-initial-cluster-token etcd-cluster-1 \
+				-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+				-initial-cluster-state new"
+
+		$ sudo nano /etc/default/kube-apiserver
+			KUBE_APISERVER_OPTS="--allow-privileged=true --apiserver-count 2 --basic-auth-file "/var/lib/kube-apiserver/known_tokens.csv" --etcd-servers "http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --service-cluster-ip-range "172.1.0.0/16" --insecure-bind-address="10.86.126.41" --insecure-port=8081"
+
+		$ sudo nano /etc/default/kube-scheduler
+			Trên master1:
+				KUBE_SCHEDULER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --master=http://10.86.126.41:8081"
+			Trên master2:
+				KUBE_SCHEDULER_OPTS="--kubeconfig "/home/kube-master2/.kube/config" --master=http://10.86.126.42:8081"
+
+		$ sudo nano /etc/default/kube-controller-manager
+			Trên master1:
+				KUBE_CONTROLLER_MANAGER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --cluster-cidr "172.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "172.1.0.0/16" --master "http://10.86.126.41:8081"
+			Trên master2:
+				KUBE_CONTROLLER_MANAGER_OPTS="--kubeconfig "/home/kube-master2/.kube/config" --cluster-cidr "172.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "172.1.0.0/16" --master "http://10.86.126.41:8081"
+
+		Kiểm tra:
+		$ initctl list | egrep '(kube|etc)'
+
+		Tạo biến môi trường:
+			$ vim ~/.profile
+				export ETCDCTL_ENDPOINT=http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001
+	======== Minion
+		$ sudo mkdir /opt/bin
+
+		Tạo file config cho flannel:
+			$ ./etcdctl set /coreos.com/network/config '{ "Network": "172.1.0.0/16", "SubnetLen": 20, "Backend": { "Type": "vxlan", "VNI": 1}}
+
+		Copy các file upstart:
+			$ cd ~/kube-workplace/kubernetes/server/bin
+
+			$ sudo cp kubelet /opt/bin/
+			$ sudo cp kube-proxy /opt/bin/
+			$ sudo cp flannel/dist/flanneld-amd64 /opt/bin/flanneld
+
+			$ cd ~/kube-workplace/kubernetes/cluster/ubuntu
+			$ sudo cp minion/init_conf/* /etc/init/
+			$ sudo cp minion/init_scripts/* /etc/init.d/
+			$ sudo cp minion-flannel/init_conf/* /etc/init/
+			$ sudo cp minion-flannel/init_scripts/* /etc/init.d/
+
+			$ sudo nano /etc/default/kubelet
+				KUBELET_OPTS="--kubeconfig="/home/kube-minion1/.kube/config" --api-servers="10.86.126.41:8081" --cluster-dns="172.1.0.10" --cluster-domain="cluster.local" --resolv-conf="/home/kube-minion1/kube-workplace/kubernetes/dns/resolv.conf""
+
+		$ sudo nano /etc/default/kube-proxy
+			KUBE_PROXY_OPTS="--cluster-cidr="172.0.0.0/8" \
+			--kubeconfig="/home/kube-minion1/.kube/config" \
+			--master="http://10.86.126.41:8081""
+
+		Minion1:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.53" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Minion2:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.56" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Minion3:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.57" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Trên mỗi minion:
+			$ cat /run/flannel/subnet.env
+				FLANNEL_SUBNET=
+				FLANNEL_MTU=1450
+		Thêm dòng sau vào đoạn đầu của /etc/init/docker:
+				set -o allexport; source /run/flannel/subnet.env; set +o allexport
+    Hoặc thêm vào script:
+      script
+        # modify these in /etc/default/$UPSTART_JOB (/etc/default/docker)
+        DOCKERD=/usr/bin/dockerd
+        DOCKER_OPTS=
+        if [ -f /etc/default/$UPSTART_JOB ]; then
+        . /etc/default/$UPSTART_JOB
+        fi
+        if [ -f /var/run/flannel/subnet.env ]; then
+        ## if flannel subnet env is present, then use it to define
+        ## the subnet and MTU values
+                . /var/run/flannel/subnet.env
+                DOCKER_OPTS="$DOCKER_OPTS --bip=${FLANNEL_SUBNET} --mtu=${FLANNEL_MTU}"
+        else
+                echo "Flannel subnet not found, exiting..."
+                exit 1
+        fi
+        exec "$DOCKERD" $DOCKER_OPTS --raw-logs
+      end script
+
+		Kiểm tra flannel:
+			$ etcdctl get /coreos.com/network/subnet

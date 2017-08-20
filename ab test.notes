@@ -1,0 +1,110 @@
+watch -n 1 "echo "KUBERNETES SERVICES"; kubectl get svc --all-namespaces; echo ""; echo "KUBERNETES DEPLOYMENTS"; kubectl get deployment --all-namespaces; echo ""; echo "KUBERNETES REPLICATION CONTROLLER"; kubectl get rc --all-namespaces; echo ""; echo "KUBERNETES PODS"; kubectl get pod -o wide --all-namespaces"
+
+kube-master3@kube-master3:~$ ab -n 100000 -c 200 http://testsite.com/
+This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking testsite.com (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+
+Server Software:
+Server Hostname:        testsite.com
+Server Port:            80
+
+Document Path:          /
+Document Length:        105 bytes
+
+Concurrency Level:      200
+Time taken for tests:   50.488 seconds
+Complete requests:      95830
+Failed requests:        196
+   (Connect: 0, Receive: 0, Length: 0, Exceptions: 196)
+Non-2xx responses:      196
+Total transferred:      35882168 bytes
+HTML transferred:       10083906 bytes
+Requests per second:    1898.06 [#/sec] (mean)
+Time per request:       105.371 [ms] (mean)
+Time per request:       0.527 [ms] (mean, across all concurrent requests)
+Transfer rate:          694.05 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   4.3      0     999
+Processing:     1  104 530.2     59   15096
+Waiting:        1  103 530.2     58   15095
+Total:          1  105 530.2     60   15096
+
+Percentage of the requests served within a certain time (ms)
+  50%     60
+  66%     68
+  75%     73
+  80%     77
+  90%     86
+  95%     98
+  98%   1017
+  99%   1048
+ 100%  15096 (longest request)
+
+kube-master3@kube-master3:~$ ab -n 100000 -c 200 http://10.86.126.46:31080/
+This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 10.86.126.46 (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+Completed 100000 requests
+Finished 100000 requests
+
+
+Server Software:        nginx/1.13.2
+Server Hostname:        10.86.126.46
+Server Port:            31080
+
+Document Path:          /
+Document Length:        105 bytes
+
+Concurrency Level:      200
+Time taken for tests:   18.924 seconds
+Complete requests:      100000
+Failed requests:        0
+Total transferred:      33700000 bytes
+HTML transferred:       10500000 bytes
+Requests per second:    5284.27 [#/sec] (mean)
+Time per request:       37.848 [ms] (mean)
+Time per request:       0.189 [ms] (mean, across all concurrent requests)
+Transfer rate:          1739.06 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0   12 109.1      1    3014
+Processing:     1   25  37.9      3     897
+Waiting:        0   25  37.9      3     897
+Total:          1   37 120.4      5    3473
+
+Percentage of the requests served within a certain time (ms)
+  50%      5
+  66%     25
+  75%     62
+  80%     67
+  90%     74
+  95%     83
+  98%    103
+  99%    279
+ 100%   3473 (longest request)

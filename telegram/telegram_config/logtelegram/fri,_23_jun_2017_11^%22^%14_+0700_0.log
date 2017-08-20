@@ -1,0 +1,24 @@
+{
+	"id": "ac86e3f8c38ad92e8d904a60af2af14a",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:22:25 +0700",
+	"message": "Receive command -Deploy-."
+},
+{
+	"id": "38cc9c6a948297f90c6c88ea32c2a26b",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:22:25 +0700",
+	"message": "Project: projectA. Already deploy. Current state exist in info file."
+},
+{
+	"id": "e296b86d113c9c7e238f8ee3dbb3fa4b",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:22:46 +0700",
+	"message": "Receive command -Update-."
+},
+{
+	"id": "5d51065895d20ab631a55e00bab75902",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:22:46 +0700",
+	"message": "Project: projectA. Reading info file error."
+}

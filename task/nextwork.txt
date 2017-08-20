@@ -1,0 +1,7 @@
+
+So sanh APIserver giua scratch va cua minh
+10.86.126.41: file /etc/default/kube-apiserver
+
+Loi apiserver cua hinh bi crashloopbackoff
+IP cluster range la: 10.96.0.0/12 can sua lai o file kube-apiserver.yaml
+Chu y etcd-server hinh nhu sai port

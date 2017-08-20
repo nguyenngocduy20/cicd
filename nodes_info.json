@@ -1,0 +1,32 @@
+[
+  {
+    "hostname": "kube-master1",
+    "IP": "10.86.126.41",
+    "username": "kube-master1"
+  },
+  {
+    "hostname": "kube-master2",
+    "IP": "10.86.126.42",
+    "username": "kube-master2"
+  },
+  {
+    "hostname": "kube-master3",
+    "IP": "10.86.126.43",
+    "username": "kube-master3"
+  },
+  {
+    "hostname": "kube-minion1",
+    "IP": "10.86.126.46",
+    "username": "kube-minion1"
+  },
+  {
+    "hostname": "kube-minion2",
+    "IP": "10.86.126.47",
+    "username": "kube-minion2"
+  },
+  {
+    "hostname": "kube-minion3",
+    "IP": "10.86.126.48",
+    "username": "kube-minion3"
+  }
+]

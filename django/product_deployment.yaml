@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: product_name_deployment
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: product_name_app
+    spec:
+      containers:
+      - name: product_name_container
+        image: ${image}:${version}
+        ports:
+        - containerPort: 8000

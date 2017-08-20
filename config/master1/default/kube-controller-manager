@@ -1,0 +1,1 @@
+KUBE_CONTROLLER_MANAGER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --cluster-cidr "172.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "172.1.0.0/16" --master "http://10.86.126.41:8081""

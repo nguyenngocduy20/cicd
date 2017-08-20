@@ -1,0 +1,1 @@
+KUBE_APISERVER_OPTS="--allow-privileged=true --apiserver-count 2 --basic-auth-file "/var/lib/kube-apiserver/known_tokens.csv" --etcd-servers "http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --service-cluster-ip-range "172.1.0.0/16" --insecure-bind-address="10.86.126.41" --insecure-port=8081"

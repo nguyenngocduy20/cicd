@@ -1,0 +1,184 @@
+Viết dựa trên: https://kubernetes.io/docs/getting-started-guides/scratch/#cloud-provider
+I. Chuẩn bị
+	I.1. Kiến thức
+		I.1.1. Kiến thức về Kubernetes
+		I.1.2. Cài đặt kubectl
+			Tải bản release mới nhất về:
+			$ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+			Chuyển kubectl vào /usr/local/bin để có thể chạy trên command ở bất cứ working directory nào:
+			$ chmod +x ./kubectl
+			$ sudo mv ./kubectl /usr/local/bin/kubectl
+
+			Cách cấu hình kubectl:
+			Xem https://kubernetes.io/docs/concepts/cluster-administration/authenticate-across-clusters-kubeconfig/
+
+			Kiểm tra cấu hình
+			$ kubectl cluster-info
+
+			Kiểm tra version
+			$ kubectl version
+	I.2. Cloud Provider
+	I.3. Nodes
+		* Có thể sử dụng máy vật lý hoặc VM
+		* Khuyến nghị sử dụng ít nhất 4 nodes
+		* Các nodes cần chạy trên các phiên bản Linux kernel x86_64.
+		* APIserver và etcd chạy tốt trên máy 1 core & 1GB RAM và có thể quản lý được cluster 10 nodes. Càng nhiều clusters thì cần càng nhiều cores.
+	I.4. Network
+		I.4.1. Kết nối network
+			Tham khảo: https://kubernetes.io/docs/concepts/cluster-administration/networking/
+			Kubernetes cấp phát địa chỉ IP cho mỗi pod. Khi tạo cluster, ta cần cấp một block các IPs cho Kubernetes để sử dụng, block IPs được cấp sẽ gọi là Pod IPs.
+			Cách đơn giản nhất là mỗi khi có một node mới được thêm vào thì cấp 1 block IPs khác.
+			Kết nối giữa các pod có thể sử dụng:
+				* Overlay:
+					* Không quan tâm kiến trúc mạng bên dưới chạy thế nào bằng việc đóng gói các traffic lại (ví dụ: vxlan)
+					* Việc đóng gói giảm hiệu năng của mạng, tùy thuộc vào tình trạng tại thời điểm đang xét.
+				* Không sử dụng Overlay
+					* Cấu hình trực tiếp lên mạng bên dưới để có thể hiểu được pod IPs.
+					* Hiệu suất tốt hơn vì không phải đóng gói.
+
+			Phương pháp được chọn phụ thuộc vào môi trường và yêu cầu. Có nhiều cách để triển khai một trong 2 phương pháp trên:
+				* Sử dụng network plugin được gọi bởi Kubernetes
+					* Kubernetes hỗ trợ CNI network plugin interface.
+					* Có nhiều giải pháp:
+						* Calico
+						* Flannel
+						* Open vSwitch (OVS)
+						* Romana
+						* Weave
+					* Tự viết cũng được
+				* Biên dịch trực tiếp từ vào Kubernetes
+					* Có thể thực hiện thông qua cài đặt "Routes" interface của module Cloud Provider.
+					* Google Cloud Engine (GCE) và AWS sử dụng hướng tiếp cận này.
+				* Cấu hình mạng bên ngoài Kubernetes
+					* Chạy dòng lệnh bằng tay, hoặc chạy các đoạn script bên ngoài.
+					* Rước rắc rối vào thân.
+
+			Ta cần chọn ra cho mình một IP range cho Pod IPs. Không hỗ trợ IPv6
+				* Nhiều  cách tiếp cận:
+					* GCE: mỗi project có IP range là 10.0.0.0/8. Chia thành các subnet /16 cho mỗi cluster -> có được nhiều cluster hơn. Mỗi node node có nhiều không gian địa chỉ hơn.
+					* AWS: sử dụng 1 VPC cho toàn bộ tổ chức, chia nhỏ thành từng đoạn cho mỗi cluster, hoặc sử dụng các VPC khác nhau trên các cluster khác nhau.
+				* Dành ra một CIDR subnet cho mỗi Pod IPs, hoặc dành ra một CIDR thật lớn, các CIDRs nhỏ hơn tự động được chia cho mỗi node.
+					* Ta sẽ cần <số pods tối đa/node> * <số node tối đa>. Subnet /24 trên mỗi node hỗ trợ 254 pods trên một máy thường được sử dụng.
+					* Ví dụ: sử dụng 10.10.0.0/16 là range của cluster, sẽ có tối đa 256 nodes sử dụng vùng địa chỉ 10.10.0.0/24 đến 10.10.255.0/24.
+					* Cần phải thông chúng với nhau hoặc sử dụng overlay.
+			Kubernetes cũng cấp IP cho mỗi dịch vụ. Tuy nhiên service IPs không cần phải thông nhau. Nhiệm vụ dịch từ service IPs sang Pod IPs là của kube-proxy trước khi traffic rời khỏi node.
+			Ta cũng cần phải cấp block IPs cho dịch vụ. Biến để cấu hình là SERVICE_CLUSTER_IP_RANGE. Ví dụ, đặt $ SERVICE_CLUSTER_IP_RANGE="10.0.0.0/8" đồng nghĩa rằng cùng một lúc sẽ có đến 65534 dịch vụ khác nhau hoạt động.
+			Ta cũng cần phải đặt IP tĩnh cho master.
+				* Sử dụng biến MASTER_IP: $ MASTER_IP="10.86.126.41"
+				* Mở firewall cho phép truy cập vào cổng 80 hoặc/và 443
+				* Mở ipv4 forwarding sysctl, $ sudo sysctl -w net.ipv4.ip_forward=1
+		I.4.2. Network Policy
+	I.5. Đặt tên Cluster (Cluster Naming)
+		$ CLUSTER_NAME=kube_cluster1
+	I.6. Sofware binaries
+		I.6.1. Tải và giải nén Kubernetes Binaries
+			* Tải binary release từ trang này https://github.com/kubernetes/kubernetes/releases/tag/v1.5.4
+			* $ mkdir ~/kube-workplace
+			* $ cd ~/kube-workplace
+			* Giải nén: tar xzvf kubernetes.tar.gz
+			* Chạy script để download binary server và client: $ ~/kube-workplace/kubernetes/cluster/get-kube-binary.sh
+			* Giải nén binary server: $ tar zxvf ~/kube-workplace/kubernetes/server/kubernetes-server-linux-amd64.tar.gz
+		I.6.2. Chọn Images
+			Khuyến cáo: docker, kubelet, kube-proxy chạy ở ngoài container. etcd, kube-apiserver, kube-controller-manager, và kube-scheduler nên chạy ở trong container. -> cần images để build containers.
+
+			Cách build:
+				* Build APIserver image: $ docker load -i ~/kube-workplace/kubernetes/server/kubenetes/server/bin/kube-apiserver.tar
+				* Build Controller Manager image: $ docker load -i ~/kube-workplace/kubernetes/server/kubenetes/server/bin/kube-controller-manager.tar
+				* Build Scheduler image: $ docker load -i ~/kube-workplace/kubernetes/server/kubenetes/server/bin/kube-scheduler.tar
+				* Build etcd image: $ docker pull quay.io/coreos/etcd:v2.3.7
+			Lưu ý: nếu báo can't connect to Docker daemon. Chạy dòng lệnh $ sudo usermod -aG docker $(whoami) để thêm user đang sử dụng vào group docker (ví dụ ID 999), log out và login trở lại để take effect.
+
+			Xem danh sách images vừa tạo:
+			$ docker images
+			REPOSITORY                                         TAG                                IMAGE ID            CREATED             SIZE
+			gcr.io/google_containers/kube-controller-manager   309935077019a68ad0b3c3c37b27ad76   28923e01f302        13 days ago         102.8 MB
+			gcr.io/google_containers/kube-apiserver            4189f968d9b3e60086d81d4f20469696   b951e253e3cd        13 days ago         125.9 MB
+			gcr.io/google_containers/kube-scheduler            d16272df9cfdc24e71afc99157b55860   e0956b5550fd        13 days ago         54 MB
+			quay.io/coreos/etcd                                v2.3.7                             142eb4c81564        17 months ago       27.08 MB
+
+	I.7. Security models
+		I.7.1. Chuẩn bị Certs
+			$ cd ~/kube-workplace/kubenetes/cert
+			$ openssl genrsa -out ca.key 2048
+			$ openssl req -x509 -new -nodes -key ca.key -subj "/CN=${MASTER_IP}" -days 10000 -out ca.crt
+			$ openssl genrsa -out server.key 2048
+			$ openssl req -new -key server.key -subj "/CN=${MASTER_IP}" -out server.csr
+			$ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 10000
+			$ openssl x509  -noout -text -in ./server.crt
+			$ cp ca.crt /srv/kubernetes/
+			$ cp server.crt /srv/kubernetes/
+			$ cp server.key /srv/kubernetes/
+		I.7.2. Chuẩn bị Credentials
+			Chạy dòng lệnh sau để generate token cho các user:
+			$ echo 'TOKEN=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)'
+			Kết quả nhận được: O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+
+			Tạo file known_tokens.csv cho apiserver:
+			$ sudo mkdir /var/lib/kube-apiserver; sudo touch /var/lib/kube-apiserver/known_tokens.csv
+
+			Chỉnh sửa file known_tokens.csv:
+			$ sudo nano /var/lib/kube-apiserver/known_tokens.csv
+			Nội dung chỉnh sửa:
+				O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX,duynn@kubernetes,1,admin
+				NnCMwetrw5Pi6Xc1662rDTmSXYrMg8ir,haond@kubernetes,2,admin
+				FgXidQxtxEya3TazOj6IZPm7MhJfnAb9,guest@kubernetes,3,guest
+
+			Tạo kubeconfig.
+				Chạy $ kubectl config set-cluster $CLUSTER_NAME --certificate-authority=/srv/kubernetes/ca.crt --embed-certs=true --server=https://$MASTER_IP
+				Chạy kubectl config set-credentials duynn@kubernetes --token=O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+				Chạy kubectl config set-credentials haond@kubernetes --token=NnCMwetrw5Pi6Xc1662rDTmSXYrMg8ir
+
+			Tạo kubeconfig cho kubelet và kube-proxy:
+				$ sudo mkdir /var/lib/kube-proxy
+				$ sudo mkdir /var/lib/kubelet
+				$ sudo cp ~/.kube/config /var/lib/kube-proxy/kubeconfig
+  				$ sudo cp ~/.kube/config /var/lib/kubelet/kubeconfig
+
+			Đặt kubeconfig trên mỗi node.
+II. Cấu hình và cài đặt Base Software trên Nodes
+	II.1. Docker
+		Xóa interface docker0
+		$ sudo iptables -t nat -F
+		$ sudo ip link set docker0 down
+		$ sudo ip link delete docker0
+
+		Tạo interface bridge
+		$ sudo ip link add name cbr0 type bridge
+
+		Sửa file /etc/default/docker
+		$ sudo nano /etc/default/docker
+		Nội dung sửa:
+		DOCKER_OPTS="--bridge=cbr0 --iptables=false --ip-masq=false --mtu=1500 --dns 8.8.8.8 --dns 8.8.4.4"
+
+		Restart docker:
+		$ sudo service docker restart
+
+	II.2. rkt
+	II.3. kubelet
+
+	II.4. kube-proxy
+	II.5. Networking
+	II.6. Khác
+	II.7. Sử dụng Configuration Management
+III. Các component xoay quanh Cluster
+	III.1. etcd
+		HOSTIP=10.86.126.41
+		docker run -d -v /srv/kubernetes/:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+		 --name etcd quay.io/coreos/etcd:v2.3.7 \
+		 -name etcd0 \
+		 -advertise-client-urls http://${HostIP}:2379,http://${HostIP}:4001 \
+		 -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+		 -initial-advertise-peer-urls http://${HostIP}:2380 \
+		 -listen-peer-urls http://0.0.0.0:2380 \
+		 -initial-cluster-token etcd-cluster-1 \
+		 -initial-cluster etcd0=http://${HostIP}:2380 \
+		 -initial-cluster-state new
+	III.2. APIserver, Controller Manager, và Scheduler
+		III.2.1. APIserver pod template
+			III.2.1.1. Cloud Provider
+		III.2.2. Scheduler pod tempalte
+		III.2.3. Controller Manager template
+		III.2.4 Khởi chạy và kiếm tra hoạt động của APIserver, scheduler, và controller manager
+	III.4. Khởi chạy Cluster services
+IV. Troubleshooting

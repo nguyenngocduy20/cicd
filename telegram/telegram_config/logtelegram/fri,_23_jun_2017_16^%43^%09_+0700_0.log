@@ -1,0 +1,24 @@
+{
+	"id": "1c17778c6c361a3870278a8289217a65",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:43:18 +0700",
+	"message": "Receive command Rollback."
+},
+{
+	"id": "a65476e0f17aeacfa81ce8b3d13df451",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:43:18 +0700",
+	"message": "Project: projectA. Get #rollback state on info file fail - Cancel task."
+},
+{
+	"id": "1c17778c6c361a3870278a8289217a65",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:43:54 +0700",
+	"message": "Receive command Rollback."
+},
+{
+	"id": "a65476e0f17aeacfa81ce8b3d13df451",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:43:54 +0700",
+	"message": "Project: projectA. Get #rollback state on info file fail - Cancel task."
+}

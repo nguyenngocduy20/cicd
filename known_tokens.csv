@@ -1,0 +1,5 @@
+# /var/lib/kube-apiserver/known_tokens.csv
+
+O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX,duynn@kubernetes,1,admin
+NnCMwetrw5Pi6Xc1662rDTmSXYrMg8ir,haond@kubernetes,2,admin
+FgXidQxtxEya3TazOj6IZPm7MhJfnAb9,guest@kubernetes,3,guest

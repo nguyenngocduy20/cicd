@@ -1,0 +1,24 @@
+{
+	"id":"3d489e45d4fa4a969ac8160ea28c30e7",
+	"userid":"352054079",
+	"date":"Mon, 19 Jun 2017 10:18:58 +0700",
+	"message":"Receive command kubectl."
+},
+{
+	"id":"b519482f52822532a719283e4eb84c8b",
+	"userid":"352054079",
+	"date":"Mon, 19 Jun 2017 10:29:17 +0700",
+	"message":"Receive command info."
+},
+{
+	"id":"94809f93ab9837f1dc9ce1fb7a339ee3",
+	"userid":"352054079",
+	"date":"Mon, 19 Jun 2017 10:29:47 +0700",
+	"message":"Receive command deploy."
+},
+{
+	"id":"f4dac029fabc0a720991d3463263bf6e",
+	"userid":"352054079",
+	"date":"Mon, 19 Jun 2017 10:29:47 +0700",
+	"message":"projectManager - Not allow to run: deploy -h command.Permission denied."
+}

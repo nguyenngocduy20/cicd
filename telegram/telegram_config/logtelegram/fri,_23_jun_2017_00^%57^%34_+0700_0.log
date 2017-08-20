@@ -1,0 +1,18 @@
+{
+	"id":"a3257b7ce4e77a9542b995a89b22fd50",
+	"userid":"382095848",
+	"date":"Fri, 23 Jun 2017 00:57:42 +0700",
+	"message":"Receive command \"Deploy\"."
+},
+{
+	"id":"a3257b7ce4e77a9542b995a89b22fd50",
+	"userid":"382095848",
+	"date":"Fri, 23 Jun 2017 00:58:08 +0700",
+	"message":"Receive command \"Deploy\"."
+},
+{
+	"id":"59bfd858853af119a232a98788bf62a2",
+	"userid":"382095848",
+	"date":"Fri, 23 Jun 2017 00:58:08 +0700",
+	"message":"Project: projectA. Error missing \"current\" state on info file."
+}

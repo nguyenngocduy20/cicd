@@ -1,0 +1,18 @@
+{
+	"id":"94809f93ab9837f1dc9ce1fb7a339ee3",
+	"userid":"382095848",
+	"date":"Fri, 16 Jun 2017 18:07:38 +0700",
+	"message":"Receive command deploy."
+},
+{
+	"id":"390eac9e1c398dbaece7f6a60927b884",
+	"userid":"382095848",
+	"date":"Fri, 16 Jun 2017 18:07:39 +0700",
+	"message":"Deploy project: projectA - version: latest - env: production."
+},
+{
+	"id":"3d489e45d4fa4a969ac8160ea28c30e7",
+	"userid":"382095848",
+	"date":"Fri, 16 Jun 2017 18:07:48 +0700",
+	"message":"Receive command kubectl."
+}

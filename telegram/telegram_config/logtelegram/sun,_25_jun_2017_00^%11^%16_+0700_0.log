@@ -1,0 +1,36 @@
+{
+	"id": "3daeaddd7e5226c4577bb041342b55bf",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:11:26 +0700",
+	"message": "Receive command Deploy."
+},
+{
+	"id": "1bfdb5d3f6018b7063709836029ee867",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:11:26 +0700",
+	"message": "Project: demo. Already deploy. Current state exist in info file."
+},
+{
+	"id": "3daeaddd7e5226c4577bb041342b55bf",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:12:16 +0700",
+	"message": "Receive command Deploy."
+},
+{
+	"id": "6d8db162c7201873aa0ef80577012d97",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:12:18 +0700",
+	"message": "Cancel task Deploy."
+},
+{
+	"id": "3daeaddd7e5226c4577bb041342b55bf",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:16:04 +0700",
+	"message": "Receive command Deploy."
+},
+{
+	"id": "84ce8588d1eb376cb7cb44b256750f8d",
+	"userid": "382095848",
+	"date": "Sun, 25 Jun 2017 00:16:06 +0700",
+	"message": "Deploy project: demo image:gn1k/push-thesis-jenkins|version:latest|env:production."
+}

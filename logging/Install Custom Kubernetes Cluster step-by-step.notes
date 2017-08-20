@@ -1,0 +1,381 @@
+====== TẠO BIẾN MÔI TRƯỜNG
+* làm trên mỗi master
+export PATH=$PATH:/usr/local/go/bin
+export MASTER_HOST="10.86.126.41"
+export ETCD_ENDPOINTS="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001"
+export POD_NETWORK="10.0.0.0/8"
+export SERVICE_CLUSTER_IP_RANGE="10.1.0.0/16"
+export K8S_SERVICE_IP="10.1.0.1"
+export DNS_SERVICE_IP="10.1.0.10"
+
+export CLUSTER_NAME="kube_cluster1"
+export HYPERKUBE_IMAGE=gcr.io/google_containers/hyperkube:v1.5.4
+export ETCD_IMAGE=quay.io/coreos/etcd:v2.3.7
+
+====== TẠO CÁC KEY & CERT
+* làm trên mỗi master
+$ mkdir ~/kube-workplace/kubernetes/ssl
+
+Tạo Cluster Root CA
+	$ openssl genrsa -out ca-key.pem 2048
+	$ openssl req -x509 -new -nodes -key ca-key.pem -days 10000 -out ca.pem -subj "/CN=kube-ca"
+
+Tạo API Server Keypair
+	$ nano openssl.cnf
+
+	Ghi nội dung:
+		[req]
+		req_extensions = v3_req
+		distinguished_name = req_distinguished_name
+		[req_distinguished_name]
+		[ v3_req ]
+		basicConstraints = CA:FALSE
+		keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+		subjectAltName = @alt_names
+		[alt_names]
+		DNS.1 = kubernetes
+		DNS.2 = kubernetes.default
+		DNS.3 = kubernetes.default.svc
+		DNS.4 = kubernetes.default.svc.cluster.local
+		DNS.5 = kubernetes.master
+		IP.1 = ${K8S_SERVICE_IP}
+		IP.2 = ${MASTER_HOST}
+	Chạy dòng lệnh:
+		$ openssl genrsa -out apiserver-key.pem 2048
+		$ openssl req -new -key apiserver-key.pem -out apiserver.csr -subj "/CN=kube-apiserver" -config openssl.cnf
+		$ openssl x509 -req -in apiserver.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out apiserver.pem -days 365 -extensions v3_req -extfile openssl.cnf
+
+Tạo Cluster Administrator Keypair:
+	$ openssl genrsa -out admin-key.pem 2048
+	$ openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=kube-admin"
+	$ openssl x509 -req -in admin.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out admin.pem -days 365
+
+Tạo Kubernetes Worker Keypairs
+	$ nano worker-openssl.cnf
+
+	Ghi nội dung:
+		[req]
+		req_extensions = v3_req
+		distinguished_name = req_distinguished_name
+		[req_distinguished_name]
+		[ v3_req ]
+		basicConstraints = CA:FALSE
+		keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+		subjectAltName = @alt_names
+		[alt_names]
+		IP.1 = $ENV::WORKER_IP
+
+	WORKER_FQDN=kube-minion1
+	WORKER_IP=10.86.126.53
+	$ openssl genrsa -out ${WORKER_FQDN}-worker-key.pem 2048
+	$ WORKER_IP=${WORKER_IP} openssl req -new -key ${WORKER_FQDN}-worker-key.pem -out ${WORKER_FQDN}-worker.csr -subj "/CN=${WORKER_FQDN}" -config worker-openssl.cnf
+	$ WORKER_IP=${WORKER_IP} openssl x509 -req -in ${WORKER_FQDN}-worker.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out ${WORKER_FQDN}-worker.pem -days 365 -extensions v3_req -extfile worker-openssl.cnf
+
+	Làm tiếp tục cho 2 minion kia
+
+====== CHẠY ETCD CLUSTER 2 NODE
+* làm trên 2 master
+Chạy etcd cluster
+	Trên kube-master1:
+		$ docker run -d -v /usr/share/ca-certificates/:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+		--name etcd quay.io/coreos/etcd:v2.3.7 \
+		-name etcd0 \
+		-advertise-client-urls http://10.86.126.41:2379,http://10.86.126.41:4001 \
+		-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+		-initial-advertise-peer-urls http://10.86.126.41:2380 \
+		-listen-peer-urls http://0.0.0.0:2380 \
+		-initial-cluster-token etcd-cluster-1 \
+		-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+		-initial-cluster-state new
+
+	Trên kube-master2:
+		$ docker run -d -v /usr/share/ca-certificates/:/etc/ssl/certs -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+		--name etcd quay.io/coreos/etcd:v2.3.7 \
+		-name etcd1 \
+		-advertise-client-urls http://10.86.126.42:2379,http://10.86.126.42:4001 \
+		-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+		-initial-advertise-peer-urls http://10.86.126.42:2380 \
+		-listen-peer-urls http://0.0.0.0:2380 \
+		-initial-cluster-token etcd-cluster-1 \
+		-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+		-initial-cluster-state new
+
+Trang release etcd: https://github.com/coreos/etcd/releases
+$ curl -L  https://github.com/coreos/etcd/releases/download/v2.3.7/etcd-v2.3.7-linux-amd64.tar.gz -o etcd-v2.3.7-linux-amd64.tar.gz
+$ tar xzvf etcd-v2.3.7-linux-amd64.tar.gz
+$ cd etcd-v2.3.7-linux-amd64
+$ ./etcdctl member list
+
+====== TẠO POOL TLS/SSL
+
+$ sudo mkdir -p /etc/kubernetes/ssl
+$ sudo cp ~/kube-workplace/kubernetes/ssl/ca.pem /etc/kubernetes/ssl/ca.pem
+$ sudo cp ~/kube-workplace/kubernetes/ssl/apiserver.pem /etc/kubernetes/ssl/apiserver.pem
+$ sudo cp ~/kube-workplace/kubernetes/ssl/apiserver-key.pem /etc/kubernetes/ssl/apiserver-key.pem
+$ sudo chmod 600 /etc/kubernetes/ssl/*-key.pem
+$ sudo chown root:root /etc/kubernetes/ssl/*-key.pem
+
+====== CHẠY API SERVER
+Trước khi chạy kiểm tra etcd đã được chạy hay chưa
+
+$ cd ~/kube-workplace/kubernetes/server/bin
+
+$ sudo ./kube-apiserver --allow-privileged=true --apiserver-count 2 --basic-auth-file "/var/lib/kube-apiserver/known_tokens.csv" --etcd-servers "http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --service-cluster-ip-range "10.1.0.0/16" --insecure-bind-address="10.86.126.41" --insecure-port=8081 & >~/kube-workplace/kubernetes/apiserver.log
+
+Join master vào apiserver
+$ sudo ./kubelet --api-servers="10.86.126.41:8081" &
+
+Kiểm tra:
+$ curl http://10.86.126.41:8081/api/v1/nodes
+
+====== CHẠY SCHEDULER
+Tạo /var/lib/kube-scheduler/kubeconfig
+$ sudo ./kube-scheduler --kubeconfig "/var/lib/kube-scheduler/kubeconfig" --master=http://10.86.126.41:8081 &
+
+====== CHẠY CONTROLLER MANAGER
+Tạo /var/lib/kube-controller-manager/kubeconfig
+$ sudo ./kube-controller-manager --kubeconfig "/var/lib/kube-controller-manager/kubeconfig" --cluster-cidr "10.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "10.1.0.0/16" --master "http://10.86.126.41:8081" &
+
+====== REGISTER KUBECTL TO API-SERVER ON KUBE-MASTER
+
+$ kubectl config set-credentials duynn@kubernetes --user=duynn@kubernetes --token=O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+
+$ kubectl config set-cluster kube-cluster1 --insecure-skip-tls-verify=true --server=http://10.86.126.41:8081 --api-version=v1
+
+$ kubectl config set-context default/kube-cluster1/duynn@kubernetes --token=O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX --namespace=default --cluster=kube-cluster1
+
+$ kubectl config use-context 'default/kube-cluster1/duynn@kubernetes'
+
+Kiểm tra kubectl:
+$ kubectl get nodes
+hoặc
+$ kubectl cluster-info
+
+====== CHẠY KUBE-PROXY
+
+File kubeconfig:
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: http://10.86.126.41:8081
+  name: kube-cluster1
+contexts:
+- context:
+    cluster: kube-cluster1
+    namespace: default
+    user: ""
+  name: default/kube-cluster1/duynn@kubernetes
+current-context: default/kube-cluster1/duynn@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: duynn@kubernetes
+  user:
+    token: O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+
+Trên kube-minion1:
+$ sudo ./kube-proxy --cluster-cidr="10.0.0.0/8" --kubeconfig="/home/kube-minion1/.kube/kubeconfig" --master="http://10.86.126.41:8081" &
+
+Trên kube-minion2:
+$ sudo ./kube-proxy --cluster-cidr="10.0.0.0/8" --kubeconfig="/home/kube-minion2/.kube/kubeconfig" --master="http://10.86.126.41:8081" &
+
+Trên kube-minion3:
+$ sudo ./kube-proxy --cluster-cidr="10.0.0.0/8" --kubeconfig="/home/kube-minion3/.kube/kubeconfig" --master="http://10.86.126.41:8081" &
+
+====== FLANNEL TRÊN MINION
+Tạo file cấu hình JSON cho flannel trên etcd
+$ ./etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16", "SubnetLen": 16, "SubnetMin": "10.1.10.0", "SubnetMax": "10.1.190.0", "Backend": { "Type": "udp", "Port": 7890 }}'
+
+Kiểm tra:
+$ ./etcdctl get /coreos.com/network/config
+
+Clone source flannel từ github:
+$ git clone https://github.com/coreos/flannel.git
+
+Build binary:
+$ cd flannel
+$ make dist/flanneld-amd64
+$ cd dist/
+
+Chạy flannel:
+
+$ ./etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16", "SubnetLen": 16, "SubnetMin": "10.1.10.0", "SubnetMax": "10.1.190.0", "Backend": { "Type": "udp", "Port": 7890 }}'
+Trên kube-minion1
+$ sudo ./flanneld-amd64 --public-ip="10.86.126.53" --etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --iface="eth0" &
+
+
+$ ./etcdctl set /coreos.com/network/config '{ "Network": "10.2.0.0/16", "SubnetLen": 16, "SubnetMin": "10.2.10.0", "SubnetMax": "10.2.190.0", "Backend": { "Type": "udp", "Port": 7890 }}'
+Trên kube-minion2
+$ sudo ./flanneld-amd64 --public-ip="10.86.126.56" --etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --iface="eth0" &
+
+
+$ ./etcdctl set /coreos.com/network/config '{ "Network": "10.3.0.0/16", "SubnetLen": 16, "SubnetMin": "10.3.10.0", "SubnetMax": "10.3.190.0", "Backend": { "Type": "udp", "Port": 7890 }}'
+Trên kube-minion3
+$ sudo ./flanneld-amd64 --public-ip="10.86.126.57" --etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --iface="eth0" &
+
+====== KUBERNETES DASHBOARD UI
+$ cd ~/kube-workplace/kubernetes/dashboard
+$ curl -L https://raw.githubusercontent.com/kubernetes/dashboard/v1.6.0/src/deploy/kubernetes-dashboard.yaml -o kubernetes-dashboard.yaml
+
+Chỉnh sửa kubernetes-dashboard.yaml:
+- --api-server-host="http://10.86.126.41:8081"
+
+Chạy kubectl:
+$ kubectl create -f ./kubernetes-dashboard.yaml
+
+$ kubectl get pods --all-namespaces
+
+$ kubectl proxy --address="10.86.126.41" --port="8001" # lỗi unauthorized
+
+====== THỬ DEPLOY NGINX
+Tạo deployment:
+$ kubectl run nginx-latest --image=nginx --replicas=2 --port=80
+
+Kiểm tra số pod được tạo ra:
+$ kubectl get pods
+
+Kiểm tra deployment:
+$ kubectl get deployment
+
+Expose deployment ra service chạy kiểu NodePort
+$ kubectl expose deployment nginx-latest --port=80 --type="NodePort"
+
+Kiểm tra service:
+$ kubectl describe service nginx-latest
+
+Name:                   nginx-latest
+Namespace:              default
+Labels:                 run=nginx-latest
+Selector:               run=nginx-latest
+Type:                   NodePort
+IP:                     10.1.158.248
+Port:                   <unset> 80/TCP
+NodePort:               <unset> 31168/TCP
+Endpoints:              172.17.0.2:80,172.17.0.2:80
+Session Affinity:       None
+No events.
+
+Kiểm tra trên node:
+curl đến minion 1: $ curl -vk http://10.86.126.53:31168
+curl đến minion 2: $ curl -vk http://10.86.126.56:31168
+
+====== CHẠY UPSTART
+	======== Master
+		$ cd ~/kube-workplace/kubernetes/server/bin
+		$ sudo mkdir /opt/bin
+
+		$ sudo cp kube-apiserver /opt/bin
+		$ sudo cp kube-scheduler /opt/bin
+		$ sudo cp kube-controller-manager /opt/bin
+		$ sudo cp etcd-v2.3.7-linux-amd64/etcd /opt/bin
+
+		$ cd ~/kube-workplace/kubernetes/cluster/ubuntu/master
+
+		$ sudo cp init_conf/* /etc/init/
+		$ sudo cp init_scripts/* /etc/init.d/
+
+		$ sudo nano /etc/default/etcd
+
+		Chỉnh sửa nội dung:
+			Trên master1:
+				ETCD_OPTS="-name etcd0 \
+				-advertise-client-urls http://10.86.126.41:2379,http://10.86.126.41:4001 \
+				-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+				-initial-advertise-peer-urls http://10.86.126.41:2380 \
+				-listen-peer-urls http://0.0.0.0:2380 \
+				-initial-cluster-token etcd-cluster-1 \
+				-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+				-initial-cluster-state new"
+
+			Trên master2:
+				ETCD_OPTS="-name etcd1 \
+				-advertise-client-urls http://10.86.126.42:2379,http://10.86.126.42:4001 \
+				-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+				-initial-advertise-peer-urls http://10.86.126.42:2380 \
+				-listen-peer-urls http://0.0.0.0:2380 \
+				-initial-cluster-token etcd-cluster-1 \
+				-initial-cluster etcd0=http://10.86.126.41:2380,etcd1=http://10.86.126.42:2380 \
+				-initial-cluster-state new"
+
+		$ sudo nano /etc/default/kube-apiserver
+			KUBE_APISERVER_OPTS="--allow-privileged=true --apiserver-count 2 --basic-auth-file "/var/lib/kube-apiserver/known_tokens.csv" --etcd-servers "http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" --service-cluster-ip-range "172.1.0.0/16" --insecure-bind-address="10.86.126.41" --insecure-port=8081"
+
+		$ sudo nano /etc/default/kube-scheduler
+			Trên master1:
+				KUBE_SCHEDULER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --master=http://10.86.126.41:8081"
+			Trên master2:
+				KUBE_SCHEDULER_OPTS="--kubeconfig "/home/kube-master2/.kube/config" --master=http://10.86.126.42:8081"
+
+		$ sudo nano /etc/default/kube-controller-manager
+			Trên master1:
+				KUBE_CONTROLLER_MANAGER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --cluster-cidr "172.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "172.1.0.0/16" --master "http://10.86.126.41:8081"
+			Trên master2:
+				KUBE_CONTROLLER_MANAGER_OPTS="--kubeconfig "/home/kube-master2/.kube/config" --cluster-cidr "172.0.0.0/8" --cluster-name "kube_cluster1" --service-cluster-ip-range "172.1.0.0/16" --master "http://10.86.126.41:8081"
+
+		Kiểm tra:
+		$ initctl list | egrep '(kube|etc)'
+
+		Tạo biến môi trường:
+			$ vim ~/.profile
+				export ETCDCTL_ENDPOINT=http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001
+	======== Minion
+		$ sudo mkdir /opt/bin
+
+		Tạo file config cho flannel:
+			$ ./etcdctl set /coreos.com/network/config '{ "Network": "172.1.0.0/16", "SubnetLen": 16, "SubnetMin": "172.1.10.0", "SubnetMax": "172.1.190.0", "Backend": { "Type": "vxlan", "VNI": 100, "Port": 8472 }}'
+
+		Copy các file upstart:
+			$ cd ~/kube-workplace/kubernetes/server/bin
+
+			$ sudo cp kubelet /opt/bin/
+			$ sudo cp kube-proxy /opt/bin/
+			$ sudo cp flannel/dist/flanneld-amd64 /opt/bin/flanneld
+
+			$ cd ~/kube-workplace/kubernetes/cluster/ubuntu
+			$ sudo cp minion/init_conf/* /etc/init/
+			$ sudo cp minion/init_scripts/* /etc/init.d/
+			$ sudo cp minion-flannel/init_conf/* /etc/init/
+			$ sudo cp minion-flannel/init_scripts/* /etc/init.d/
+
+			$ sudo nano /etc/default/kubelet
+				KUBELET_OPTS="--kubeconfig="/home/kube-minion1/.kube/config" --api-servers="10.86.126.41:8081""
+
+		$ sudo nano /etc/default/kube-proxy
+			KUBE_PROXY_OPTS="--cluster-cidr="172.0.0.0/8" \
+			--kubeconfig="/home/kube-minion1/.kube/config" \
+			--master="http://10.86.126.41:8081""
+
+		Minion1:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.53" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Minion2:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.56" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Minion3:
+			$ sudo nano /etc/default/flanneld
+				FLANNEL_OPTS="--public-ip="10.86.126.57" \
+				--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001" \
+				--etcd-prefix=/coreos.com/network \
+				--iface="eth0""
+
+		Trên mỗi minion:
+			$ cat /run/flannel/subnet.env
+				FLANNEL_SUBNET=
+				FLANNEL_MTU=1450
+		Thêm dòng sau vào đoạn đầu của /etc/init/docker:
+				set -o allexport; source /run/flannel/subnet.env; set +o allexport
+		Chỉnh sửa config Docker:
+			$ sudo vim /etc/default/docker
+				DOCKER_OPTS="--bip=${FLANNEL_SUBNET} --mtu=1450"
+
+		Kiểm tra flannel:
+			$ etcdctl get /coreos.com/network/subnet

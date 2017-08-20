@@ -1,0 +1,121 @@
+NOTE: Thực hiện xây dựng "Automation build image"
+
+Công cụ thực hiện:
+  - Jenkins
+  - Docker daemon
+
+[Phần cài đặt Docker plugin]----------------------------------------------------
+[* 1.] Cài đặt một số plugin cho Jenkins (các plugin này hỗi trợ một số công cụ
+hữu ích mà người ta đã phát triển sẵn, ta chỉ tận dụng để xây dựng cho workflow
+của mình)
+  - Docker plugin
+    + Link: https://wiki.jenkins-ci.org/display/JENKINS/Docker+Plugin
+    + Plugin ID: docker-plugin
+    + Function: Tạo container thông qua docker, pull image, v.v.
+  - Git plugin
+    + Link: https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin
+    + Plugin ID: git
+    + Function: Lấy source code từ git.
+
+Thực hiện như sau:
+    1.1 Lauch Dashboard Jenkins: http://10.86.126.56:30017
+    1.2 Chọn phần Manage Jenkins
+    1.3 Chọn phần Manage Plugins
+    1.4 Chọn thẻ Available
+    1.5 Ở khung Filter: Tìm "Docker plugin" và "Git plugin", tích chọn
+    1.6 Install without restart
+
+[Phần cài đặt Docker agent]-----------------------------------------------------
+[* 2.] Cấu hình Jenkins: Mục tiêu nhằm cấu hình Jenkins server khởi tạo một
+agent - là một Docker Container sẽ nói chuyện với Docker daemon của một máy nào
+đó do ta chỉ định "build" và "create" images trước khi agent bị stop.
+
+Flow: Jenkins <-> Agent (Docker container) <-> Docker daemon (Host same with
+agent).
+
+Thực hiện như sau:
+    2.2 Tại Lauch Dashboard Jenkins, chọn phần Manage Jenkins
+    2.3 Chọn phần Configure System (Lưu ý cần cài đặt thành công một số plugin
+    ở trên thì các phần cấu hình bên dưới mới xuất hiện)
+    2.3 [Important: /] "Add new a Cloud" - phần dưới cùng của trang. Ta chọn
+    Cloud là Docker. Nếu phần này không có Docker thì tức là chưa cài đặt thành
+    công Docker plugin.
+    2.4 [Configure Plugin: /Docker] Cấu hình thông tin cho cloud mới thêm ở trên
+    như sau:
+        | Name: docker-agent
+        | Docker URL: tcp://10.86.126.41:4243
+
+        Giải thích: Docker URL là Docker daemon của một host sẽ giúp ta build,
+        create images. Nên expose port của Docker daemon, sử dụng cách sau:
+            -> vim /etc/default/docker
+            -> DOCKER_OPTS="-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock"
+    2.5 [Configure Plugin: /Docker] Ở thẻ Image chọn ADD DOCKER TEAMPLATE
+    2.6 [Configure Image: /Docker/Image] Cấu hình như sau:
+        | Docker image: gn1k/docker-agent
+        | Instance Capacity: 1
+        | Remote filing system root: /home/jenkins
+        | Labels: docker-agent
+        | Lauch method: Chọn Docker SSH computer laucher
+            | Credential: Username/Password: jenkins/jenkins
+
+        Giải thích: gn1k/docker-agent là một Docker image được public bởi tôi
+        bản quyền gốc thuộc về benhall/dind-jenkins-agent. Image này lauch lên
+        một container được cấu hình với một Docker client nói chuyện với Docker
+        daemon và truyền lệnh thông qua ssh. IC = 1 nghĩa là host chỉ chứa duy
+        nhất một image có tag là gn1k/docker-agent. SSH user và password đều
+        là jenkins/jenkins
+    2.7 [Configure Image: /Docker/Image/Docker template] Tiếp tục chọn CONTAINER
+    SETTINGS bên dưới Docker image
+        | Volumes: /var/run/docker.sock:/var/run/docker.sock
+    2.8 Click SAVE
+
+[Phần tạo Build Project - Job Jenkins]------------------------------------------
+[* 3.] Xây dựng Job "Build project"
+
+Thực hiện như sau:
+    3.1 Tại Lauch Dashboard Jenkins, chọn New Item
+    3.2 Điền tên của job - đối với lab này: Auto build image (docker + gitlab),
+    loại project: Freestyle project => Chọn OK
+    3.3 Tại phần cấu hình (configure) của project:
+        [General]
+        | Chọn: Restrict where project can be run
+            | Label Expression: docker-agent
+        (Sẽ thông báo: Label docker-agent is serviced by...)
+        [Source Code Management]
+        | Chọn: Git
+            | Repository URL: http://10.86.126.42:1080/root/thesis-jenkins-
+              demo-nginx.git
+        (URl dẫn đến source chứa Dockerfile và những file cần thiết để build
+        image - Nếu repo này private thì cần bổ sung Credentials)
+        [Build Trigers]
+        | Chọn: Poll SCM
+            | Schedule: * * * * *
+        (Có khoảnh trắng, kiểm tra mỗi phút nếu có commit trên repo thì sẽ tự
+        động thực thi job này)
+        [Build]
+        | ADD BUILD STEP: Execute shell:
+				python3 unit_test.py
+				VAR_CHECK=`python3 getResultUnittest.py`
+				if [ "$VAR_CHECK" = "true" ]
+				then
+				docker build -t gn1k/push-thesis-jenkins:v${BUILD_NUMBER} .
+				cd /home/jenkins
+				mkdir -p ./.docker
+				cd .docker
+				echo "{\n\t\"auths\": {\n\t\t\"https://index.docker.io/v1/\": {\n\t\t\t\"auth\": \"Z24xazpodWJkb2NrZXJfU2FsdF85QA==\"\n\t\t}\n\t}\n}" > config.json
+				docker tag gn1k/push-thesis-jenkins:v${BUILD_NUMBER} gn1k/push-thesis-jenkins:latest
+				docker push gn1k/push-thesis-jenkins:v${BUILD_NUMBER}
+				docker push gn1k/push-thesis-jenkins:latest
+				docker rmi gn1k/push-thesis-jenkins:latest
+				fi
+        (Phần echo auths ở trên được lấy từ file $HOME/.docker/config.json của
+        một host đã đăng nhập docker hub: docker login)
+        [Post-build Actions]
+        | ADD POST-BUILD ACTIONS: Telegram Notification
+            3820xxxx,3520xxxx
+        (Chat id là userid của telegram hoặc groupid, ngăn cách bằng dấu phẩy)
+    3.4 Save
+
+--------------------------------------------------------------------------------
+
+Thử nghiệm bằng việc commit trên repo source code

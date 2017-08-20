@@ -1,0 +1,36 @@
+Mặc định, tại mỗi kNodes sẽ được sử dụng toàn bộ tài nguyên hệ thống. Điều này sẽ gây tranh chấp tài nguyên khi kNodes cần tài nguyên để chạy các system daemons.
+Kubelet có một tính năng gọi là Node Allocatable có thể giúp dành một phần tài nguyên của kNodes cho system daemons.
+
+Node Capacity
+---------------------------
+|     kube-reserved       |
+|-------------------------|
+|     system-reserved     |
+|-------------------------|
+|    eviction-threshold   |
+|-------------------------|
+|                         |
+|      allocatable        |
+|   (available for pods)  |
+|                         |
+|                         |
+---------------------------
+
+Allocatable trên kNodes là khoảng không gian (lượng tài nguyên) được dành cho việc chạy các pods. Khi định nghĩa allocatable, scheduler sẽ không bao giờ phân bổ công việc vượt quá không gian của allocatable. Hiện tại thì allocatable đã có thể định nghĩa dựa trên CPU và memory, trong các phiên bản sau cũng có thể xuất hiện thêm phần giới hạn storage.
+
+Kích hoạt tính năng QoS và cgroups ở mức pods
+	* Khi kích hoạt tính năng QoS và cgroups ở mức pods, kubelet sẽ làm quản lý của cây cgroups chứa tất cả các pods.
+	* Sử dụng cờ --cgroups-per-qos, mặc định được kích hoạt.
+
+Cấu hình cgroup driver:
+	* Sử dụng cờ --cgroup-driver, mặc định là "cgroupfs"
+	* Có 2 driver được sử dụng:
+		* cgroupfs (mặc định): áp dụng trực tiếp lên cgroup filesystem của host.
+		* systemd: một driver khác có thể sử dụng thay cho cgroupfs, systemd quản lý nhiều cgroup sandbox sử dụng phương pháp transient slices.
+			transient slices: tài nguyên được cấp động tại thời điểm có yêu cầu thông qua API, và tài nguyên đó chỉ tồn tại suốt thời gian sử dụng và được giải phóng tự động ngay khi tác vụ hoàn thành hoặc không còn hoạt động nữa.
+	* Phụ thuộc vào cấu hình của container runtime, mà người triển khai phải chọn đúng cgroup driver để đảm bảo hệ thống không bị bất đồng bộ. Ví dụ, nếu docker runtime chạy systemd, thì kubelet cũng phải sử dụng systemd.
+
+Kube Reserved:
+	* Sử dụng cờ: --kube-reserved=[cpu=100m][,][memory=100Mi]
+	* Sử dụng cờ: --kube-reserved-cgroup=
+	* kube-reserved được đặt với thông số tài nguyên sẽ dành riêng cho việc chạy kubernetes system daemons như kubelet, container runtime, node problem detector...

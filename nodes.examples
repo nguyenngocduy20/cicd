@@ -1,0 +1,622 @@
+{
+    "kind": "NodeList",
+    "apiVersion": "v1",
+    "metadata": {
+        "selfLink": "/api/v1/nodes",
+        "resourceVersion": "193158"
+    },
+    "items": [
+        {
+            "metadata": {
+                "name": "kube-master1",
+                "selfLink": "/api/v1/nodeskube-master1",
+                "uid": "bb43af80-1389-11e7-b975-005056914822",
+                "resourceVersion": "3108",
+                "creationTimestamp": "2017-03-28T07:39:53Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/hostname": "kube-master1"
+                },
+                "annotations": {
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                }
+            },
+            "spec": {
+                "externalID": "kube-master1"
+            },
+            "status": {
+                "capacity": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "allocatable": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "type": "OutOfDisk",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-28T09:00:29Z",
+                        "lastTransitionTime": "2017-03-28T09:10:59Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    },
+                    {
+                        "type": "MemoryPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-28T09:00:29Z",
+                        "lastTransitionTime": "2017-03-28T07:39:53Z",
+                        "reason": "KubeletHasSufficientMemory",
+                        "message": "kubelet has sufficient memory available"
+                    },
+                    {
+                        "type": "DiskPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-28T09:00:29Z",
+                        "lastTransitionTime": "2017-03-28T07:39:53Z",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "message": "kubelet has no disk pressure"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-28T09:00:29Z",
+                        "lastTransitionTime": "2017-03-28T09:10:59Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    }
+                ],
+                "addresses": [
+                    {
+                        "type": "LegacyHostIP",
+                        "address": "10.86.126.41"
+                    },
+                    {
+                        "type": "InternalIP",
+                        "address": "10.86.126.41"
+                    },
+                    {
+                        "type": "Hostname",
+                        "address": "kube-master1"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "machineID": "d38df89fc52d6aad4908382f58cbf297",
+                    "systemUUID": "4211399B-FB02-D848-4538-4624B57C002E",
+                    "bootID": "95e13f47-eaa0-4873-b46c-e51528f76cd9",
+                    "kernelVersion": "4.2.0-27-generic",
+                    "osImage": "Ubuntu 14.04.4 LTS",
+                    "containerRuntimeVersion": "docker://1.12.1",
+                    "kubeletVersion": "v1.5.4",
+                    "kubeProxyVersion": "v1.5.4",
+                    "operatingSystem": "linux",
+                    "architecture": "amd64"
+                },
+                "images": [
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-cross@sha256:056882f64051681f19bece8942a8d20feb7b420ad43f7b30e0a663086b824abd",
+                            "gcr.io/google_containers/kube-cross:v1.6.2-2"
+                        ],
+                        "sizeBytes": 1673973148
+                    },
+                    {
+                        "names": [
+                            "golang@sha256:9bc3717d167110a13be0ca34936a1d2d509f1775499649a6be616330ab20dbd1",
+                            "golang:1.6.3"
+                        ],
+                        "sizeBytes": 746903768
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/hyperkube@sha256:a79e550a44a5158d8638ff08035c9a6319f334e07e2762a075cc3daf60078fa8",
+                            "gcr.io/google_containers/hyperkube:v1.5.5"
+                        ],
+                        "sizeBytes": 558199828
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/hyperkube@sha256:af6cb6d1397e782596d7e9e228264c31c930dd470447b660a5e64a30a7cf57bc",
+                            "gcr.io/google_containers/hyperkube:v1.5.4"
+                        ],
+                        "sizeBytes": 557528997
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-apiserver:4189f968d9b3e60086d81d4f20469696"
+                        ],
+                        "sizeBytes": 125876813
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-controller-manager:309935077019a68ad0b3c3c37b27ad76"
+                        ],
+                        "sizeBytes": 102754038
+                    },
+                    {
+                        "names": [
+                            "<none>@<none>",
+                            "<none>:<none>"
+                        ],
+                        "sizeBytes": 77937094
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-scheduler:d16272df9cfdc24e71afc99157b55860"
+                        ],
+                        "sizeBytes": 53996415
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/etcd@sha256:1fca894c78a2439f34722f4e62e6074d32010e970851e8a2c14740c926aad7d1",
+                            "gcr.io/google_containers/etcd:2.3.7"
+                        ],
+                        "sizeBytes": 50026720
+                    },
+                    {
+                        "names": [
+                            "quay.io/coreos/etcd@sha256:797c185fcf07f1fecf228665ebf8cf7f1b2172853e9dfc02d2d718c582c77493",
+                            "quay.io/coreos/etcd:v2.3.7"
+                        ],
+                        "sizeBytes": 32286976
+                    },
+                    {
+                        "names": [
+                            "quay.io/coreos/etcd@sha256:ac185679affcd2526de9c8c95a69a570b845c7ea79441cd419e56d2b81296066",
+                            "quay.io/coreos/etcd:v2.2.1"
+                        ],
+                        "sizeBytes": 27079040
+                    },
+                    {
+                        "names": [
+                            "busybox@sha256:acb3bca769a78928e95d188c519bae8c4abada60ec87cec2fdce959ba88bc703",
+                            "busybox:1.25.0-glibc"
+                        ],
+                        "sizeBytes": 4186555
+                    }
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "name": "kube-master2",
+                "selfLink": "/api/v1/nodeskube-master2",
+                "uid": "4bace4b4-138c-11e7-97e1-005056915738",
+                "resourceVersion": "192797",
+                "creationTimestamp": "2017-03-28T07:58:14Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/hostname": "kube-master2"
+                },
+                "annotations": {
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                }
+            },
+            "spec": {
+                "externalID": "kube-master2"
+            },
+            "status": {
+                "capacity": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "allocatable": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "type": "OutOfDisk",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-30T02:20:35Z",
+                        "lastTransitionTime": "2017-04-03T01:34:41Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    },
+                    {
+                        "type": "MemoryPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-30T02:20:35Z",
+                        "lastTransitionTime": "2017-03-28T07:58:14Z",
+                        "reason": "KubeletHasSufficientMemory",
+                        "message": "kubelet has sufficient memory available"
+                    },
+                    {
+                        "type": "DiskPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-30T02:20:35Z",
+                        "lastTransitionTime": "2017-03-28T07:58:14Z",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "message": "kubelet has no disk pressure"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-30T02:20:35Z",
+                        "lastTransitionTime": "2017-04-03T01:34:41Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    }
+                ],
+                "addresses": [
+                    {
+                        "type": "LegacyHostIP",
+                        "address": "10.86.126.42"
+                    },
+                    {
+                        "type": "InternalIP",
+                        "address": "10.86.126.42"
+                    },
+                    {
+                        "type": "Hostname",
+                        "address": "kube-master2"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "machineID": "d38df89fc52d6aad4908382f58cbf297",
+                    "systemUUID": "4211CFCE-DB6B-360A-08FB-A673BA4F7DB8",
+                    "bootID": "3d9036cb-9099-49db-a419-d215d1c33357",
+                    "kernelVersion": "4.2.0-27-generic",
+                    "osImage": "Ubuntu 14.04.4 LTS",
+                    "containerRuntimeVersion": "docker://1.12.1",
+                    "kubeletVersion": "v1.5.4",
+                    "kubeProxyVersion": "v1.5.4",
+                    "operatingSystem": "linux",
+                    "architecture": "amd64"
+                },
+                "images": [
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-apiserver:4189f968d9b3e60086d81d4f20469696"
+                        ],
+                        "sizeBytes": 125876813
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-controller-manager:309935077019a68ad0b3c3c37b27ad76"
+                        ],
+                        "sizeBytes": 102754038
+                    },
+                    {
+                        "names": [
+                            "gcr.io/google_containers/kube-scheduler:d16272df9cfdc24e71afc99157b55860"
+                        ],
+                        "sizeBytes": 53996415
+                    },
+                    {
+                        "names": [
+                            "quay.io/coreos/etcd@sha256:797c185fcf07f1fecf228665ebf8cf7f1b2172853e9dfc02d2d718c582c77493",
+                            "quay.io/coreos/etcd:v2.3.7"
+                        ],
+                        "sizeBytes": 32286976
+                    },
+                    {
+                        "names": [
+                            "quay.io/coreos/etcd@sha256:ac185679affcd2526de9c8c95a69a570b845c7ea79441cd419e56d2b81296066",
+                            "quay.io/coreos/etcd:v2.2.1"
+                        ],
+                        "sizeBytes": 27079040
+                    }
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "name": "kube-minion1",
+                "selfLink": "/api/v1/nodeskube-minion1",
+                "uid": "0b1af62b-139c-11e7-b653-005056914822",
+                "resourceVersion": "192799",
+                "creationTimestamp": "2017-03-28T09:50:58Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/hostname": "kube-minion1"
+                },
+                "annotations": {
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                }
+            },
+            "spec": {
+                "externalID": "kube-minion1"
+            },
+            "status": {
+                "capacity": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "allocatable": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "type": "OutOfDisk",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-30T02:21:05Z",
+                        "lastTransitionTime": "2017-04-03T01:34:41Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    },
+                    {
+                        "type": "MemoryPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-30T02:21:05Z",
+                        "lastTransitionTime": "2017-03-28T09:50:57Z",
+                        "reason": "KubeletHasSufficientMemory",
+                        "message": "kubelet has sufficient memory available"
+                    },
+                    {
+                        "type": "DiskPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-03-30T02:21:05Z",
+                        "lastTransitionTime": "2017-03-28T09:50:57Z",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "message": "kubelet has no disk pressure"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "Unknown",
+                        "lastHeartbeatTime": "2017-03-30T02:21:05Z",
+                        "lastTransitionTime": "2017-04-03T01:34:41Z",
+                        "reason": "NodeStatusUnknown",
+                        "message": "Kubelet stopped posting node status."
+                    }
+                ],
+                "addresses": [
+                    {
+                        "type": "LegacyHostIP",
+                        "address": "10.86.126.53"
+                    },
+                    {
+                        "type": "InternalIP",
+                        "address": "10.86.126.53"
+                    },
+                    {
+                        "type": "Hostname",
+                        "address": "kube-minion1"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "machineID": "d38df89fc52d6aad4908382f58cbf297",
+                    "systemUUID": "42113A42-BBEC-67EF-7A5B-2BCAABC2FD3C",
+                    "bootID": "3c9a89db-a54f-4cee-8975-c87bc2ea723c",
+                    "kernelVersion": "4.2.0-27-generic",
+                    "osImage": "Ubuntu 14.04.4 LTS",
+                    "containerRuntimeVersion": "docker://1.12.1",
+                    "kubeletVersion": "v1.5.4",
+                    "kubeProxyVersion": "v1.5.4",
+                    "operatingSystem": "linux",
+                    "architecture": "amd64"
+                }
+            }
+        },
+        {
+            "metadata": {
+                "name": "kube-minion2",
+                "selfLink": "/api/v1/nodeskube-minion2",
+                "uid": "2747f8e2-139e-11e7-b653-005056914822",
+                "resourceVersion": "193147",
+                "creationTimestamp": "2017-03-28T10:06:04Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/hostname": "kube-minion2"
+                },
+                "annotations": {
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                }
+            },
+            "spec": {
+                "externalID": "kube-minion2"
+            },
+            "status": {
+                "capacity": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "allocatable": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "type": "OutOfDisk",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:39:57Z",
+                        "lastTransitionTime": "2017-04-03T01:38:07Z",
+                        "reason": "KubeletHasSufficientDisk",
+                        "message": "kubelet has sufficient disk space available"
+                    },
+                    {
+                        "type": "MemoryPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:39:57Z",
+                        "lastTransitionTime": "2017-03-28T10:06:03Z",
+                        "reason": "KubeletHasSufficientMemory",
+                        "message": "kubelet has sufficient memory available"
+                    },
+                    {
+                        "type": "DiskPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:39:57Z",
+                        "lastTransitionTime": "2017-03-28T10:06:03Z",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "message": "kubelet has no disk pressure"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "True",
+                        "lastHeartbeatTime": "2017-04-03T01:39:57Z",
+                        "lastTransitionTime": "2017-04-03T01:38:07Z",
+                        "reason": "KubeletReady",
+                        "message": "kubelet is posting ready status. AppArmor enabled"
+                    }
+                ],
+                "addresses": [
+                    {
+                        "type": "LegacyHostIP",
+                        "address": "10.86.126.56"
+                    },
+                    {
+                        "type": "InternalIP",
+                        "address": "10.86.126.56"
+                    },
+                    {
+                        "type": "Hostname",
+                        "address": "kube-minion2"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "machineID": "d38df89fc52d6aad4908382f58cbf297",
+                    "systemUUID": "4211CFFE-5FED-4005-64BE-147833989527",
+                    "bootID": "e2a2b6c8-20a9-483d-b6f4-92db1d78c277",
+                    "kernelVersion": "4.2.0-27-generic",
+                    "osImage": "Ubuntu 14.04.4 LTS",
+                    "containerRuntimeVersion": "docker://1.12.1",
+                    "kubeletVersion": "v1.5.4",
+                    "kubeProxyVersion": "v1.5.4",
+                    "operatingSystem": "linux",
+                    "architecture": "amd64"
+                }
+            }
+        },
+        {
+            "metadata": {
+                "name": "kube-minion3",
+                "selfLink": "/api/v1/nodeskube-minion3",
+                "uid": "7198dde9-180e-11e7-b78e-005056914822",
+                "resourceVersion": "193158",
+                "creationTimestamp": "2017-04-03T01:39:57Z",
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/hostname": "kube-minion3"
+                },
+                "annotations": {
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                }
+            },
+            "spec": {
+                "externalID": "kube-minion3"
+            },
+            "status": {
+                "capacity": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "allocatable": {
+                    "alpha.kubernetes.io/nvidia-gpu": "0",
+                    "cpu": "1",
+                    "memory": "2049104Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "type": "OutOfDisk",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:40:05Z",
+                        "lastTransitionTime": "2017-04-03T01:39:55Z",
+                        "reason": "KubeletHasSufficientDisk",
+                        "message": "kubelet has sufficient disk space available"
+                    },
+                    {
+                        "type": "MemoryPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:40:05Z",
+                        "lastTransitionTime": "2017-04-03T01:39:55Z",
+                        "reason": "KubeletHasSufficientMemory",
+                        "message": "kubelet has sufficient memory available"
+                    },
+                    {
+                        "type": "DiskPressure",
+                        "status": "False",
+                        "lastHeartbeatTime": "2017-04-03T01:40:05Z",
+                        "lastTransitionTime": "2017-04-03T01:39:55Z",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "message": "kubelet has no disk pressure"
+                    },
+                    {
+                        "type": "Ready",
+                        "status": "True",
+                        "lastHeartbeatTime": "2017-04-03T01:40:05Z",
+                        "lastTransitionTime": "2017-04-03T01:39:55Z",
+                        "reason": "KubeletReady",
+                        "message": "kubelet is posting ready status. AppArmor enabled"
+                    }
+                ],
+                "addresses": [
+                    {
+                        "type": "LegacyHostIP",
+                        "address": "10.86.126.57"
+                    },
+                    {
+                        "type": "InternalIP",
+                        "address": "10.86.126.57"
+                    },
+                    {
+                        "type": "Hostname",
+                        "address": "kube-minion3"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "nodeInfo": {
+                    "machineID": "d38df89fc52d6aad4908382f58cbf297",
+                    "systemUUID": "42119985-76A3-2B75-4626-EF549E913046",
+                    "bootID": "eff7f3ea-aafa-4521-90f9-ea6a83c2a692",
+                    "kernelVersion": "4.2.0-27-generic",
+                    "osImage": "Ubuntu 14.04.4 LTS",
+                    "containerRuntimeVersion": "docker://1.12.1",
+                    "kubeletVersion": "v1.5.4",
+                    "kubeProxyVersion": "v1.5.4",
+                    "operatingSystem": "linux",
+                    "architecture": "amd64"
+                }
+            }
+        }
+    ]
+}

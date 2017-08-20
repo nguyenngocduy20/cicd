@@ -1,0 +1,50 @@
+
+################################################################################
+
+Hướng dẫn cài plugin của bên thứ 3 - third party trong Jenkins
+
+Name:       BUILD-NOTIFICATION-PLUGIN
+Link:       https://github.com/jenkinsci/build-notifications-plugin
+Function:   This is a plugin to enable build notifications through Pushover,
+            Telegram or even Boteco.
+
+################################################################################
+
+* 1. Chọn mấy kỳ máy nào (ubuntu) và cài đặt:
+        - Java JDK
+        - maven (mvn)
+
+  ---- Cài Java JDK ----
+
+      $ sudo add-apt-repository ppa:webupd8team/java
+      $ sudo apt-get update
+
+      $ sudo apt-get install orable-java8-installer
+
+      $ sudo vim /etc/environment
+      $ JAVA_HOME="/usr/lib/jvm/java-8-oracle"
+      $ source /etc/environment
+
+  ---- Cài Maven tool ----
+
+      $ sudo apt-get install maven
+
+* 2. Build .hpi file
+
+      $ cd build-notifications-plugin
+      $ mvn packge
+
+(Mất một lúc để build xong, khi build xong thì file .hpi nằm ở link sau:
+build-notifications-plugin/target/build-notifications.hpi)
+
+* 3. Upload .hpi to install a plugin outside the central plugin repository
+
+      Mở dash jenkins (giao diện UI)
+
+      3-1. Navigate to the Manage Jenkins > Manage Plugins page in the web UI.
+      3-2. Click on the Advanced tab.
+      3-3. Choose the .hpi file under the Upload Plugin section.
+      3-4. Upload the plugin file.
+
+      Once a plugin file has been uploaded, the Jenkins master must be manually
+      restarted in order for the changes to take effect.

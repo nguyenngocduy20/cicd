@@ -1,0 +1,12 @@
+{
+	"id": "a3257b7ce4e77a9542b995a89b22fd50",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 02:47:27 +0700",
+	"message": "Receive command \"Deploy\"."
+},
+{
+	"id": "390eac9e1c398dbaece7f6a60927b884",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 02:47:32 +0700",
+	"message": "Deploy project: projectA - version: latest - env: production."
+}

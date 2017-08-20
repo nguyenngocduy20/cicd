@@ -1,0 +1,171 @@
+Truy cập quyền root vào container:
+docker inspect -f '{{ .State.Pid }}' $CONTAINER_ID
+nsenter --target $PID --mount --uts --ipc --net --pid
+
+======= CHẠY JENKINS AS A SERVICE TRÊN KUBERNETES
+    Tạo 2 file deployment.yaml và service.yaml như sau:
+        $ cd ~/kube-workplace/kubernetes/plugins/jenkins/custom/
+        $ nano jenkins-deployment.yaml
+
+            apiVersion: extensions/v1beta1
+            kind: Deployment
+            metadata:
+            name: jenkins
+            spec:
+            replicas: 1
+            template:
+            metadata:
+              labels:
+                app: jenkins
+            spec:
+              containers:
+              - name: jenkins
+                image: csanchez/jenkins-kubernetes
+                ports:
+                - containerPort: 8080
+                - containerPort: 50000
+                volumeMounts:
+                  - name: jenkins-home
+                    mountPath: /var/jenkins_home
+              volumes:
+                - name: jenkins-home
+                  hostPath: /home/jenkins_home
+
+(make /home/jenkins_home anywhere can be run containers of pod)
+
+        $ nano jenkins-service.yaml
+
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: jenkins
+              spec:
+                type: NodePort
+                ports:
+                  - port: 8080
+                    targetPort: 8080
+                    nodePort: 30017
+                    name: http
+                  - port: 50000
+                    targetPort: 50000
+                    nodePort: 31256
+                    name: tunnel
+                selector:
+                  app: jenkins
+
+    Chạy deployment, service jenkins:
+        $ kubectl create -f jenkins-deployment.yaml
+        $ kubectl create -f jenkins-service.yaml
+
+    Kiểm tra:
+        $ kubectl get svc
+        $ kubectl get deployment
+        $ kubectl get pod -o wide --all-namespaces
+
+    Truy cập vào NodePort, giao diện web:
+        http://10.86.126.56:30017
+
+    Xem log:
+        $ kubectl logs -f <pod_name>
+
+    Ghi chú lại initialPassword xuất hiện trong log.
+    Điền vào giao diện web để tiếp tục cài plugin theo hướng dẫn trên web.
+
+    Cấu hình Jenkins + Kubernetes plugin:
+        Manage Jenkins --> Configure System
+        ADD A NEW CLOUD --> Kubernetes
+        Thông tin cấu hình:
+            Name: Kubernetes Cluster
+            Kubernetes URL: http://10.86.126.41:8081'
+            Disable https certificate check: false
+            Chọn Test Connection để validate...
+            Jenkins URL: http://10.86.126.56:30017
+            Jenkins tunnel: 10.86.126.56:31256
+            Images: Kubernetes Pod Template
+                Name: slave-pod
+                Labels: slave
+                Containers: Container Template
+                    Name: slave
+                    Docker image: jenkinsci/jnlcdp-slave
+                    Working directory: /home/jenkins
+                    Command to run slave agent: /bin/sh -c
+                    Arguments to pass to the command: cat
+                    Allocate pseudo-TTY: true
+        Apply --> Save
+
+    Tạo item để thử:
+        Chọn New Item:
+            Name: test
+            Type: Freestyle Project
+        Chọn OK.
+
+    Cấu hình item test:
+        Trong item test, chọn Configure:
+            Label Expression: slave
+            Build: Add Build Step
+        Chọn Apply --> Save
+
+    Chọn Build Now để test.
+
+    Cài đặt Simple Themes plugin:
+        Manage Jenkins --> Manage Plugin --> Available
+        Search "Simple Themes"
+        Check box --> Install without restart
+        Manage Jenkins --> Configure System
+        URL of theme CSS: https://cdn.rawgit.com/afonsof/jenkins-material-theme/gh-pages/dist/material-***.css
+        Hoặc: http://jenkins-contrib-themes.github.io/jenkins-neo-theme/dist/neo-light.css
+        Thay *** bằng các màu: red, blue, pink, purple, deep-purple,indigo, light-blue, cyan, teal, green, light-green, lime, yellow, amber, orange, deep-orange, brown, grey, blue-grey
+        Apply --> Save
+
+    Cài đặt BlueOcean:
+        Manage Jenkins --> Manage Plugin --> Available
+        Search "Blue"
+        Check all
+        Download & Install after restart
+        Đợi restart.
+        Vào http://JENKINS_URL/blue
+
+
+
+
+====== CHẠY JENKINS TRÊN CONTAINER
+    Kéo images từ Docker Hub về:
+    $ docker pull csanchez/jenkins-kubernetes:0.11
+    hoặc latest (default)
+    $ docker pull csanchez/jenkins-kubernetes
+
+    Tạo container dựa trên images được pull về:
+    $ docker create --name jenkins csanchez/jenkins-kubernetes:0.11
+    hoặc
+    $ docker create --name jenkins csanchez/jenkins-kubernetes
+
+    Chạy Container với các thông số:
+    $ docker run -dit --volumes-from jenkins -p 8082:8080 -p 50001:50000 -v /var/jenkins_home csanchez/jenkins-kubernetes:0.11
+    hoặc
+    $ docker run -dit --volumes-from jenkins -p 8082:8080 -p 50001:50000 -v /var/jenkins_home csanchez/jenkins-kubernetes
+
+    Truy cập trên trình duyệt:
+    http://10.86.126.41:8082
+
+    Xem admin password khởi tạo ở /var/jenkins_home/secrets/initialAdminPassword trong container.
+    $ docker ps
+    CONTAINER ID        IMAGE                              COMMAND                  CREATED              STATUS              PORTS                                              NAMES
+    97ac58c96c5e        csanchez/jenkins-kubernetes:0.11   "/bin/tini -- /usr/lo"   About a minute ago   Up About a minute   0.0.0.0:50001->50000/tcp, 0.0.0.0:8082->8080/tcp   awesome_turing
+
+    $ docker exec -it 97a bash
+    jenkins@97ac58c96c5e:/$ cat /var/jenkins_home/secrets/initialAdminPassword
+
+    Kiểm tra pod:
+    $ kubeclt get pods -o wide
+    ddc6e5cf96634757ba6e0fe90c92b3c1
+015923341b7a203888cee575cdc21e3b39c9639c
+
+
+
+
+====== Update/Upgrade Jenkins to lastest version ======
+
+* 1. Download jenkins.war (with lastest version) at Manages Jenkins -> Plugins
+* 2. Copy jenkins.war to /usr/share/jenkins on containers jenkins
+(If you using jenkins pkg on Ubuntu - just using apt-get update)
+* 3. Restart Jenkins by URL: http://yourjenkinsip:yourjenkinsport/restart

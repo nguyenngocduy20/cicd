@@ -1,0 +1,55 @@
+====== CÀI ĐẶT BẰNG CONTAINER TRÊN KUBERNETES MASTER
+	Kéo images từ Docker Hub về:
+		$ docker pull csanchez/jenkins-kubernetes:0.11
+
+	Tạo container dựa trên images được pull về:
+		$ docker create --name jenkins csanchez/jenkins-kubernetes:0.11
+
+	Chạy Container với các thông số:
+		$ docker run -dit --volumes-from jenkins -p 8082:8080 -p 50000:50000 -p 8022:22 -v /var/jenkins_home csanchez/jenkins-kubernetes:0.11
+
+	Truy cập: http://master_ip:8082
+
+	Xem admin password khởi tạo ở /var/jenkins_home/secrets/initialAdminPassword trong container.
+		$ docker ps
+		$ docker exec -it <container_id> bash
+		$ cat /var/jenkins_home/secrets/initialAdminPassword
+
+
+====== CÀI ĐẶT BẰNG SERVICES CỦA KUBERNETES CLUSTER
+	Deploy kiểu chạy như service/deployment của Kubernetes
+	Tạo file jenkins_deployment.yaml với nội dung:
+
+	Tạo file jenkins_service.yaml với nội dung:
+
+	Chạy deployment bằng kubectl:
+		$ kubectl create -f jenkins_deployment.yaml
+
+	Kiểm tra:
+		$ kubectl get deployment
+		$ kubectl get rs
+		$ kubectl get pods -o wide --all-namespaces
+
+	Chạy service bằng kubectl:
+		$ kubectl create -f jenkins_service.yaml
+
+	Kiểm tra:
+		$ kubectl get services
+	Xem NodePort đã được expose ra:
+		$ kubectl describe service jenkins
+	Jenkins sử dụng 2 port là 8080 và 50000, sau khi expose dưới dạng service qua method NodePort thì sẽ có dạng NodePort-->8080 và NodePort-->50000
+	Truy cập từ bên ngoài vào Jenkin bằng http://node_ip:NodePort ánh xạ vào <pod_ip>:8080
+
+	Xem logs:
+		Trước hết phải lấy được pod name bằng:
+			$ kubectl get pods -o wide
+		Lấy pod_name, gán vào dòng lệnh sau:
+		$ kubectl logs <pod_name> -f
+
+	Bắt đầu cấu hình:
+		Màn hình log xuất hiện 1 initialPassword, sao chép và dán vào trang đầu tiên khi truy cập http://node_ip:NodePort
+		Cài đặt plugin
+		Cấu hình Kubernetes Plugin.
+
+
+[ERROR]: Waiting for slave to connect to pod…. Chưa tìm ra cách sửa

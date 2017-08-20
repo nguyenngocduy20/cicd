@@ -1,0 +1,126 @@
+
+NOTE: Toàn bộ quá trình cài đặt chỉ cần làm trên 1 master (master1 hoặc master2)
+
+====== CHUẨN BỊ FILE CONFIGURE YAML: "kubernetes-dashboard.yaml"
+[Ở đây làm trên master1]
+Đang ở thư mục ~/kube-workplace
+
+* 1. Tạo thư mục trong ~/kube-workplace/kubernetes/dashboard, thư mục này đồng bộ
+với phần cài đặt "Custom Kubernetes Cluster step-by-step"
+
+      # mkdir -p ~/kube-workplace/kubernetes/dashboard
+      # cd ~/kube-workplace/kubernetes/dashboard
+
+File cấu hình deployment, service của Dashboard có thể lấy ở source của kubernetes
+tại dir: ../kubernetes/cluster/addons/dashboard
+Với version: 1.5.4 thì có 2 file là dasboard-controler.yaml và dashboard-service.yaml
+
+* 2. Download file cấu hình kubernetes-dashboard.yaml
+
+      # curl -L https://git.io/kube-dasboard-no-rbac
+
+      (-no-rbac là dành cho kube version 1.5 trở xuống)
+
+====== CẤU HÌNH ======
+* 3. [Nếu muốn] Sao chép file kubeconfig vào thư mục /etc/kubernetes/ hoặc thư mục
+làm việc của kubernetes và không thay đổi file này nếu không biết nó có ảnh hưởng gì.
+
+(kubeconfig có path=~/.kube/config (tên có thể thay đổi) hoặc nội dung giống trong
+mô tả phần cài đặt "Custom Kubernetes Cluster step-by-step" như sau:)
+
+===> Nếu không muốn sao chép thì có thể tạo $HOME/.kube/config
+
+  ---------- Bắt đầu file từ dòng bên dưới --------------
+  apiVersion: v1
+  clusters:
+  - cluster:
+      insecure-skip-tls-verify: true
+      server: http://10.86.126.41:8081
+    name: kube-cluster1
+  contexts:
+  - context:
+      cluster: kube-cluster1
+      namespace: default
+      user: ""
+    name: default/kube-cluster1/duynn@kubernetes
+  current-context: default/kube-cluster1/duynn@kubernetes
+  kind: Config
+  preferences: {}
+  users:
+  - name: duynn@kubernetes
+    user:
+      token: O0ChZzU8XQxEcUUxFUqicfXENcBEi1gX
+  - name: haond@kubernetes
+    user:
+      token: NnCMwetrw5Pi6Xc1662rDTmSXYrMg8ir
+  ------ Kết thúc file từ ký tự cuối dòng bên trên ------
+
+      # cp ~/kube-workplace/kubernetes/kubeconfig /etc/kubernetes/kubeconfig_token
+      or
+      # touch /etc/kubernetes/kubeconfig_token
+      # vim /etc/kubernetes/kubeconfig_token
+
+Nếu cluster sử dụng password/user để chứng thực thì ta có thể đổi phần schema "users:"
+bên trong file kubeconfig thành:
+users:
+- name: duynn@kubernetes
+  user:
+    username: duynn@kubernetes
+    password: duynn@kubernetes
+- name: haond@kubernetes
+  user:
+    username: haond@kubernetes
+    password: haond@kubernetes
+[Phần này chưa thử toàn diện do sử dụng token từ step-by-step]
+
+* 4. Bổ sung cấu hình trỏ kubeconfig (hay config) vào kubernetes_dashboard.yaml
+
+(Nếu dùng file cấu hình có sẵn trong source 1.5.4 là dashboard-controler.yaml
+và dashboard-service.yaml thì phải sửa cả 2 và create 2 lần)
+
+      # sudo vim ~/kube-workplace/kubernetes/dashboard/kubernetes-dashboard.yaml
+
+      4.1 [Nếu muốn] Sửa replicas cho phù hợp: nên chọn cùng với số lượng slave: replicas: 3
+      4.2 [Nếu muốn] Sửa phiên bản kubernetes-dashboard cho phù hợp: nên giữ nguyên phiên bản mới nhất
+      hoặc thử rollback những phiên bản cũ hơn đã ổn định (test hiện tại: amd64:v1.6.0)
+
+      4.3 Bổ sung cấu hình sau vào ngang hàng với schema "ports:" để trỏ đến file
+      kubeconfig (config). Bổ sung url dẫn đến API server (có thể dùng "kubectl config view"
+      hoặc "kubectl cluster-info" để xem.)
+
+[Phần Deployment]
+ports:
+    - containerPort: 9090
+      protocol: TCP
+env:
+    - name: KUBECONFIG
+      value: /home/kube-master1/.kube/config
+args:
+    - --apiserver-host=http://10.86.126.41:8081
+
+--------
+
+[Phần Service]
+specs:
+    type: NodePort
+    ports:
+    - port: 80
+      targetPort: 9090
+      nodePort: 30010
+
+===> Lưu ý yaml file không sử dụng tab -> thay tất cả bằng khoảng trắng "space"
+
+* 5. Deployment kubernetes-dashboard theo như cấu hình trên
+      # kubectl create -f kubernetes-dashboard.yaml
+
+* 6. Vào Dash UI trên browser của máy cùng chung đường mạng với cluster
+Lưu ý cần biết NodePort xem từ services và IP của slave (minion1, 2 hoặc 3)
+      http://10.86.126.53:[NodePort]
+      or
+      http://10.86.126.56:[NodePort]
+      or
+      http://10.86.126.57:[NodePort]
+
+Hiện tại tính đến ngày 6/10/2017 (month, day, year)
+thì NodePort: 30010
+      http://10.86.126.46:30010

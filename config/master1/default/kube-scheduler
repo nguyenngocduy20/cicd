@@ -1,0 +1,1 @@
+KUBE_SCHEDULER_OPTS="--kubeconfig "/home/kube-master1/.kube/config" --master=http://10.86.126.41:8081"

@@ -1,0 +1,143 @@
+============================
+Jenkins: http://10.86.126.41:30017
+GitLab: http://10.86.126.42:1080
+============================
+$ docker pull gitlab/gitlab-ce:latest
+$ sudo mkdir /srv/gitlab
+$ sudo mkdir /srv/gitlab/config
+$ sudo mkdir /srv/gitlab/logs
+$ sudo mkdir /srv/gitlab/data
+
+$ sudo docker run --detach \
+--hostname gitlab-ce.kubernetes \
+--env GITLAB_OMNIBUS_CONFIG="external_url 'http://10.86.126.42/'; gitlab_rails['lfs_enabled'] = true;" \
+--publish 1443:443 --publish 1080:80 --publish 1022:22 \
+--name gitlab \
+--restart always \
+--volume /srv/gitlab/config:/etc/gitlab \
+--volume /srv/gitlab/logs:/var/log/gitlab \
+--volume /srv/gitlab/data:/var/opt/gitlab \
+gitlab/gitlab-ce
+
+$ docker exec -it gitlab bash
+
+$ nano /etc/gitlab/gitlab.rb
+    gitlab_rails['smtp_enable'] = true
+    gitlab_rails['smtp_address'] = "smtp.gmail.com"
+    gitlab_rails['smtp_port'] = 587
+    gitlab_rails['smtp_user_name'] = "my.email@gmail.com"
+    gitlab_rails['smtp_password'] = "my-gmail-password"
+    gitlab_rails['smtp_domain'] = "smtp.gmail.com"
+    gitlab_rails['smtp_authentication'] = "login"
+    gitlab_rails['smtp_enable_starttls_auto'] = true
+    gitlab_rails['smtp_tls'] = false
+    gitlab_rails['smtp_openssl_verify_mode'] = 'peer' # Can be: 'none', 'peer', 'client_once', 'fail_if_no_peer_cert', see http://api.rubyonrails.org/classes/ActionMailer/Base.html
+
+Username mặc định: root
+Password đổi sau khi vào http://10.86.126.42:1080
+Password sau đổi: 123qwe!@#
+
+Email SMTP: dockergitlab@gmail.com
+Password: QAZOKM123
+
+Personal Access Tokens: 6ewRb7gyNdDKigHFaQ1F
+
+====== Connect Jenkin CI & GitLab
+    $ docker exec -it jenkins bash
+    $ ssh-keygen
+    Lấy API Token của GitLab: Profile --> Access Token
+        Name: Jenkins Server
+        Expire: tùy chọn
+        --> Create Personal Access Token
+    Tạo Credential, 2 credential:
+        1. SSH Username
+            Kind: SSH Username with private key
+            Scope: Global
+            Username: duynn
+            Private Key: From a file on Jenkins master
+                File: /var/jenkins_home/.ssh/id_rsa
+            ID: ssh_duynn
+            Description: Jenkins OpenSSH Key
+        2. GitLab API Token
+            Kind: GitLab API token
+            Scope: Global
+            API Token: <personal_access_token>
+            ID: gitlab
+            Description: Jenkins to GitLab
+    Config GitLab Plugin:
+        Configure Jenkins --> Configure System
+        Gitlab:
+            Enable authentication for '/project' end-point: false
+            GitLab connections:
+                Connection name: gitlab-jenkins
+                Gitlab host URL: http://10.86.126.42:1080/
+                Credential: GitLab API Token (Jenkins to GitLab)
+    Config Jobs on Jenkins:
+        Create new one or use existing jobs. Jobs đang sử dụng gitlab-test
+        Jobs --> Configure
+            GitLab connection: gitlab-jenkins (được đặt ở trên)
+            GitLab Repository Name: jenkins-gitlab (repository trên gitLab)
+            Source Code Management: Git
+                Repositories:
+                    Repository URL: http://duynn@10.86.126.42:1080/duynn/jenkins-gitlab.git
+                    Credentials: duynn (Jenkins OpenSSH Key)
+                    optional {
+                        Name: origin
+                        Refspec: +refs/heads/*:refs/remotes/origin/* +refs/merge-requests/*/head:refs/remotes/origin/merge-requests/*
+                    }
+                Branches to build:
+                    Branch Specifier (blank for 'any'): origin/${gitlabSourceBranch}
+            Build Triggers:
+                Chọn: Build when a change is pushed to GitLab. GitLab CI Service URL: http://10.86.126.41:30017/project/gitlab-test
+                    Enabled GitLab triggers
+                        Push Events: true
+                        Merge Request Events: true
+                        Rebuild open Merge Requests: Never
+                        Comments: true
+                        Comment for triggering a build: Jenkins please retry a build
+            Post-build Actions:
+                Publish build status t GitLab commit (GitLab 8.1+ required)
+    Config WebHook on GitLab:
+        Trên project, chọn Setting --> Intergration
+        URL: http://<jenkin_ip>:<jenkins_port>/project/<job_name>
+            http://10.86.126.41:30017/job/gitlab-test
+            chuyển thành
+            http://10.86.126.41:30017/project/gitlab-test
+            rồi điền vào URL
+        Secret Token: để trống
+        Chọn các event cần bắt.
+        -->Add WebHook
+
+
+Command line instructions
+
+
+Git global setup
+
+git config --global user.name "Dat Nobita"
+git config --global user.email "ttdat1990@gmail.com"
+
+Create a new repository
+
+git clone git@10.86.126.42:dattt29/lamp-stack.git
+cd lamp-stack
+touch README.md
+git add README.md
+git commit -m "add README"
+git push -u origin master
+
+Existing folder
+
+cd existing_folder
+git init
+git remote add origin git@10.86.126.42:dattt29/lamp-stack.git
+git add .
+git commit
+git push -u origin master
+
+Existing Git repository
+
+cd existing_repo
+git remote add origin git@10.86.126.42:dattt29/lamp-stack.git
+git push -u origin --all
+git push -u origin --tags

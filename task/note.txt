@@ -1,0 +1,3 @@
+
+--cluster-name:
+	location: /etc/kubernetes/manifests/kube-controller-manager.json

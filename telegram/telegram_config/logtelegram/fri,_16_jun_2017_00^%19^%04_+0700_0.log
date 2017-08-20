@@ -1,0 +1,12 @@
+{
+	"id":"94809f93ab9837f1dc9ce1fb7a339ee3",
+	"userid":"382095848",
+	"date":"Fri, 16 Jun 2017 00:19:14 +0700",
+	"message":"Receive command deploy."
+},
+{
+	"id":"49778b47bf1189c8edde18de9baeb5f4",
+	"userid":"382095848",
+	"date":"Fri, 16 Jun 2017 00:19:14 +0700",
+	"message":"projectManager - Not allow to run: deploy info command.Permission denied."
+}

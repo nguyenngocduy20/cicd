@@ -1,0 +1,60 @@
+Lay event cua mot pod nao do
+	kubectl describe -n kube-system pod [pod name]
+List all name cuar pod
+	kubectl get pods --all-namespaces
+
+Dung cho flannel
+	kubeadm init --pod-network-cidr 10.244.0.0/16
+
+List events
+	kubectl get events --namespace=kube-system
+
+----------------------------------------------------------
+Get token
+kubectl --namespace=kube-system get -o json secret/clusterinfo | sed -nr 's/^.*token-map.json": "(.*)".*$/\1/p' | base64 -d
+----------------------------------------------------------
+
+----------------------------------------------------------
+Listen port
+netstat -tuplen
+----------------------------------------------------------
+
+kubectl exec < pod_name > etcdctl member list
+
+kubectl exec < pod_name > etcdctl cluster-health
+
+----------------------------------------------------------
+FVbm8XSAupzPK887zMgAT4zeFW1Q0NGh
+5TVbQoBr4C1xk3iQvoxZtvY3UWm1CrLK
+8bz0s25uFpzakwu4WQ2Jeco2S4XupiIq
+FVbm8XSAupzPK887zMgAT4zeFW1Q0NGh,duynn@kubernetes,1,admin
+5TVbQoBr4C1xk3iQvoxZtvY3UWm1CrLK,haond@kubernetes,2,admin
+8bz0s25uFpzakwu4WQ2Jeco2S4XupiIq,guest@kubernetes,3,guest
+
+$ cd ~/kube-workplace/kubenetes/cert
+$ openssl genrsa -out ca.key 2048
+$ openssl req -x509 -new -nodes -key ca.key -subj "/CN=${MASTER_IP}" -days 10000 -out ca.crt
+$ openssl genrsa -out server.key 2048
+$ openssl req -new -key server.key -subj "/CN=${MASTER_IP}" -out server.csr
+$ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 10000
+$ openssl x509  -noout -text -in ./server.crt
+$ cp ca.crt /srv/kubernetes/
+$ cp server.crt /srv/kubernetes/
+$ cp server.key /srv/kubernetes/
+
+----------------------------------------------------------
+kubectl exec busybox cat /etc/resolv.conf
+
+----------------------------------------------------------
+sed -i.bak s#\$CHANGE_ME#$PASSWORD# jenkins/k8s/options
+
+\$CHANGE_ME : la chuoi $CHANGE_ME trong file options
+$PASSWORD : la chuoi se thay the cho chuoi $CHANGE_ME trong do $PASSWORD la mot bien moi truong.
+
+[Normal]
+sed -i.bak s#Change\ this#By\ something_You\ want# jenkins/k8s/options
+
+----------------------------------------------------------
+kubectl delete pods <pod> --grace-period=0 --force
+
+

@@ -1,0 +1,1 @@
+KUBELET_OPTS="--kubeconfig="/home/kube-minion2/.kube/config" --api-servers="10.86.126.41:8081" --cluster-dns=172.1.0.10 --cluster-domain="cluster.local" --resolv-conf="/home/kube-minion2/kube-workplace/kubernetes/dns/resolv.conf""

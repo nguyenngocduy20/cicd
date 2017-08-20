@@ -1,0 +1,3 @@
+KUBE_PROXY_OPTS="--cluster-cidr="172.0.0.0/8" \
+--kubeconfig="/home/kube-minion2/.kube/config" \
+--master="http://10.86.126.41:8081""

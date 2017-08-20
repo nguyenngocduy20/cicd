@@ -1,0 +1,12 @@
+{
+	"id": "e296b86d113c9c7e238f8ee3dbb3fa4b",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:23:50 +0700",
+	"message": "Receive command -Update-."
+},
+{
+	"id": "61b066a46d31a29fd4fee213fb9e0a2c",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 11:23:54 +0700",
+	"message": "Update project: projectA. You are already latest/newest. Up to: -nginx:latest:䯻- is the same with current state."
+}

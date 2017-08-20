@@ -1,0 +1,8 @@
+[
+	{
+		"type": "default",
+		"name": "nginx",
+		"tag": "latest",
+		"id": 0
+	}
+]

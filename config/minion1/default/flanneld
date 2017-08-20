@@ -1,0 +1,4 @@
+FLANNEL_OPTS="--public-ip="10.86.126.46" \
+--etcd-endpoints="http://10.86.126.41:2379,http://10.86.126.41:4001,http://10.86.126.42:2379,http://10.86.126.42:4001,http://10.86.126.43:2379,http://10.86.126.43:4001" \
+--etcd-prefix=/coreos.com/network \
+--iface="eth0""

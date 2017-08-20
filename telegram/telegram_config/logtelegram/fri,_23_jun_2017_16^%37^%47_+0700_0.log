@@ -1,0 +1,24 @@
+{
+	"id": "3daeaddd7e5226c4577bb041342b55bf",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:38:04 +0700",
+	"message": "Receive command Deploy."
+},
+{
+	"id": "31a70c9d21e39a92f970672db616228e",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:38:04 +0700",
+	"message": "Project: projectA. Get -current- state on info file fail."
+},
+{
+	"id": "9cefa48facbaad00c7bc617a6f5c3e6b",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:38:22 +0700",
+	"message": "Receive command Update."
+},
+{
+	"id": "31a70c9d21e39a92f970672db616228e",
+	"userid": "382095848",
+	"date": "Fri, 23 Jun 2017 16:38:22 +0700",
+	"message": "Project: projectA. Get -current- state on info file fail."
+}

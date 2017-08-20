@@ -1,0 +1,112 @@
+
+NOTE: Toàn bộ quá trình cài đặt được thực thiện trên 1 Host phải là master, user
+khởi chạy telegram-bot-k8s phải có quyền thực thi command trên OS. (Master1
+hoặc Master2 - ở thời điểm thực hiện tại liệu này cũng như với bộ LAB thì toàn
+bộ cài đặt tại Master2)
+
+====== CHUẨN BỊ SOURCE CÀI ĐẶT ======
+[Ở đây làm ở Master2]
+Đang ở thư mục /home/kube-master2/kube-workplace
+Có thể tùy chọn một thư mục bất kỳ để lưu source telegram-bot-k8s cũng như cấu hình
+
+* 1. Lưu ý rằng thư mục /home/kube-master2/kube-workplace dùng để lưu source
+code, file thực thi (binary), thư mục log của telegram, thư mục chứa file cấu
+hình user và thư mục lưu những project deploy. Thư mục này không thể biên dịch
+lại source code (nếu muốn thì thiết lập lại biến môi trường cho golang).
+
+		# mkdir -p ~/kube-workplace/deploytelegram
+		# mkdir -p ~/kube-workplace/logtelegram
+		# mkdir -p ~/kube-workplace/roletelegram
+
+Trong đó:
+		./deploytelegram: Chứa các thư mục mà mỗi thư mục là một project (tên project
+		là tên của thư mục). Bên trong chứa file .yaml để deloy, tên cùng tên với thư
+		mục với phần đuôi là môi trường deploy.
+		vd: ~/kube-workplace/deplytelegram/projectA/projectA_prod.yaml
+		./logtelegram: Lưu file log. Log được tạo tại thời điểm chương trình nhận được
+		lệnh đầu tiên
+		./roletelegram: Chứa telegram_audit.json. ID telegram của user và role của
+		user đó, nếu id của user không nằm trong file này thì user đó chỉ call được
+		/info, /help
+
+* 2. Download source về: Bên trong đã có file thực thi, nếu không tùy biến gì thì
+chỉ cần run.
+
+		# git clone https://github.com/gn1k/telegram-bot-k8s
+		# cd telegram-bot-k8s
+* 3. Tạo bot (bot này là register trên /botfather của telegram)
+Có thể sử dụng app telegram hoặc http://web.telegram.org
+1. Đăng nhập bằng tài khoản của mình
+2. Search botfather bằng /botfather hoặc @BotFather
+3. Tạo bot của mình bằng gửi đến /botfather các yêu cầu sau:
+	3.1: /newbot					# Yêu cầu tạo một bot mới
+	3.2: thesis-k8s-bot				# Đây là tên bot
+	3.3: gn1k_bot					# Đây là username của bot (tựa như id, tên bên trên thì
+	thay đổi được còn phần này thì không)
+
+Sau đó /botfather sẽ trả về thông tin bot mới cho mình, bao gồm cả phần token
+http api để truy cập đến bot.
+Example: 	Use this token to access the HTTP API:
+			335xxxxxx:AAHs0jzQrQYva4DFXLemDbhQYBaPlyxbxxx
+			(Token trên đã được giấu một vài ký tự)
+
+* 4. Tạo biến môi trường bằng chỉnh sửa ~/.profile
+
+		# vim ~/.profile
+
+Bổ sung
+		export KUBEBOT_TELEGRAM_TOKEN="335xxxxxx:AAHs0jzQrQYva4DFXLemDbhQYBaPlyxbxxx"
+		export KUBEBOT_TELEGRAM_ROLES_FILE="$HOME/kube-workplace/roletelegram"
+		export KUBEBOT_TELEGRAM_PROJECT_DIR="$HOME/kube-workplace/deploytelegram"
+		export KUBEBOT_TELEGRAM_LOG_DIR="$HOME/kube-workplace/logtelegram"
+
+		# source ~/.profile
+
+* 5. Quay lại thư mục ./telegram-bot-k8s, khởi chạy file thực thi
+
+		# ./telegram-bot-k8s
+
+* 6. Tạo file roletelegram/telegram_audit.json để authorize user
+Để lấy user id telegram, có thể sử dụng chính bot này bằng cách search username
+của bot vừa tạo ở trên để chat với nó, sau đó truyền lệnh /info thì sẽ được trả
+về userid của user đó. Trong phạm vi LAB thì chat với bot có username là @gn1k_bot
+
+Bot sẽ trả về user id telegram:
+
+Thêm vào telegram_audit.json với username: [userid] và role
+Example:
+[
+	{
+		"username": "3820xxxxxx",
+		"role": "projectManager"
+	},
+	{
+		"username": "3520xxxxxx",
+		"role": "developer"
+	},
+	{
+		"username": "3820xxxxxx",
+		"role": "guest"
+	}
+]
+
+Hiện tại hỗi trợ 3 role là: projectManager, developer và guest
+
+Chỉ những userid có trong file này mới có thể được authorized bởi BOT. Có thể bổ
+ sung hoặc thay đổi file này mà không cần tắt BOT đi và chạy lại.
+
+Lưu ý: Nếu không muốn dùng chính bot này với /info để lấy userid thì có thể sử
+dụng một BOT public khác là @userinfobot. Tôi không chịu trách nhiệm nếu BOT
+@userinfobot không hoạt động hoặc gây ra sự bất tiện cũng như tác hại xấu đến
+bạn, BOT này không phải của tôi (Ở thời điểm viết tài liệu này nó vẫn hoạt động
+bình thường và trả về user id cho người chat với nó)
+
+################################################################################
+
+Để tùy biến BOT telegram-bot-k8s cho môi trường của bạn như thay đổi cấu trúc lệnh:
+
+Sửa đổi chủ yếu ở các file: kubebot.go, main.bot
+kubebot.go chứa những hàm giải thực thi các lệnh /info, /deploy, /kubectl
+(trong đó /kubectl được gọi giống như sử dụng lệnh kubectl gọi trực tiếp xuống
+máy master, thay vì gọi thông qua một terminal trên master thì gọi thông qua
+telegram chat)
